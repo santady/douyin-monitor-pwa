@@ -3615,11 +3615,23 @@ async function readJsonGz(path){
 
 /* PWA：默认从公开只读镜像读数据；没有镜像或用户填了令牌时才走 API。 */
 const PWA_DATA_BASE = 'https://raw.githubusercontent.com/santady/douyin-monitor-pwa/mirror/data/';
+const PWA_DATA_CACHE = 'dtp-data-v2';
 async function pwaStaticFile(path){
-  const url = PWA_DATA_BASE + path.split('/').map(encodeURIComponent).join('/') +
-    '?t=' + Date.now();
-  const r = await fetch(url, {cache: 'no-store'});
-  if (r.status === 404) throw new Error(path + ' 不存在');
+  const url = PWA_DATA_BASE + path.split('/').map(encodeURIComponent).join('/');
+  let cache = null;
+  try { cache = await caches.open(PWA_DATA_CACHE); } catch (e) {}
+  const cached = cache ? await cache.match(url) : null;
+  const refresh = fetch(url, {cache: 'no-store'}).then(async r => {
+    if (r.ok && cache) await cache.put(url, r.clone());
+    return r;
+  }).catch(() => null);
+  if (cached){
+    /* 先用本地缓存秒开；后台把新数据写回缓存，下一次打开生效。 */
+    refresh.catch(() => {});
+    return {sha: '', bytes: new Uint8Array(await cached.arrayBuffer())};
+  }
+  const r = await refresh;
+  if (!r || r.status === 404) throw new Error(path + ' 不存在');
   if (!r.ok) throw new Error(path + ' HTTP ' + r.status);
   return {sha: '', bytes: new Uint8Array(await r.arrayBuffer())};
 }
