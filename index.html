@@ -3612,6 +3612,32 @@ async function readJsonGz(path){
   }
   return JSON.parse(new TextDecoder().decode(bytes));
 }
+
+/* PWA：没有 Gitee 令牌时，直接读 GitHub Contents API，不要求第二套凭据。 */
+const __pwaGieFile = gieFile;
+gieFile = async function(path){
+  if (CFG.giteeToken) return __pwaGieFile(path);
+  const r = await gh('/repos/' + CFG.repo + '/contents/' + path + '?ref=main');
+  if (r.status === 404) throw new Error(path + ' 不存在');
+  if (r.status === 401 || r.status === 403) throw new Error('GitHub 令牌无效：去设置里更新');
+  if (!r.ok) throw new Error(path + ' HTTP ' + r.status);
+  const o = await r.json();
+  if (o.content) return {sha: o.sha, bytes: b64u8((o.content || '').replace(/\n/g, ''))};
+  if (o.download_url){
+    const rr = await fetch(o.download_url, {headers: {'Authorization': 'Bearer ' + CFG.token, 'User-Agent': 'monitor-app'}});
+    if (!rr.ok) throw new Error(path + ' 下载失败 HTTP ' + rr.status);
+    return {sha: o.sha, bytes: new Uint8Array(await rr.arrayBuffer())};
+  }
+  throw new Error(path + ' 无内容');
+};
+const __pwaGieList = gieList;
+gieList = async function(dir){
+  if (CFG.giteeToken) return __pwaGieList(dir);
+  const r = await gh('/repos/' + CFG.repo + '/contents/' + dir + '?ref=main');
+  if (!r.ok) throw new Error('列目录失败 HTTP ' + r.status);
+  return await r.json();
+};
+
 const b64u8 = b64 => { const bin = atob(b64.replace(/\n/g, '')); const u = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
 const u8b64 = u8 => { let s = ''; const CH = 0x8000;
