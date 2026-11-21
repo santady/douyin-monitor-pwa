@@ -5773,9 +5773,9 @@ function openSettings(){
   openSheet('设置',
     '<div class="fld"><label>仓库（owner/repo）</label><input id="fRepo" value="' + stEsc(CFG.repo) + '"></div>' +
     /* 令牌打码显示：设置页曾经明文回显，旁人瞄一眼就全拿走。留空 = 不改动。 */
-    '<div class="fld"><label>GitHub 访问令牌（更新/触发采集用；留空 = 不改动）</label><input id="fToken" type="password" placeholder="••••••••" autocapitalize="off"></div>' +
-    '<div class="fld"><label>Gitee 访问令牌（数据读取用；留空 = 不改动）</label><input id="fGToken" type="password" placeholder="••••••••" autocapitalize="off"></div>' +
-    '<div class="fld"><label>豆瓣 Cookie（发豆瓣用；留空 = 不改动）</label><input id="fDc" type="password" placeholder="••••••••" autocapitalize="off"></div>' +
+    '<div class="fld"><label>GitHub 访问令牌（只看数据用只读令牌即可；采集/改话题需写权限）</label><input id="fToken" type="password" placeholder="••••••••" autocapitalize="off"></div>' +
+    '<div class="fld"><label>Gitee 访问令牌（可留空；PWA 默认从 GitHub 读数据）</label><input id="fGToken" type="password" placeholder="••••••••" autocapitalize="off"></div>' +
+    '<div class="fld"><label>豆瓣 Cookie（PWA 不支持发豆瓣，可留空）</label><input id="fDc" type="password" placeholder="••••••••" autocapitalize="off"></div>' +
     '<div class="fld"><label>豆瓣小组（逗号分隔）</label><input id="fDg" value="' + stEsc(CFG.dbGroups) + '"></div>' +
     '<div class="mrow"><button class="btn primary" id="fSave" style="flex:1">保存</button>' +
     '<button class="btn" id="fTest" style="flex:1">测试连接</button></div>' +
@@ -5783,7 +5783,7 @@ function openSettings(){
     '<button class="btn" id="fClr" style="flex:1">清本地缓存</button></div>' +
     '<div id="fMsg" class="hint"></div>' +
     '<div class="hint">App 版本 v' + APP_VERSION + ' · 构建 ' + BUILD_SHA +
-    '<br>令牌与 Cookie 存在本机存储里，只随本机使用；但它们也预置在安装包内，拿到 APK 的人都能提取——这个包只装在自己的手机上，别外传。</div>');
+    '<br>PWA 不预置任何令牌；你填的令牌只存这台手机的浏览器本地。公开页面代码不含私有凭据。</div>');
   $('#fSave').onclick = () => {
     CFG.repo = $('#fRepo').value.trim() || CFG.repo;
     if ($('#fToken').value.trim()) CFG.token = $('#fToken').value.trim();
