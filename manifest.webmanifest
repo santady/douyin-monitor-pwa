@@ -1,4 +1,5 @@
-{  "name": "抖音话题监控台",
+{
+  "name": "抖音话题监控台",
   "short_name": "监控台",
   "description": "抖音与小红书话题数据监控",
   "lang": "zh-CN",

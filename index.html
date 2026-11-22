@@ -14,31 +14,7 @@
 <meta name="apple-mobile-web-app-title" content="监控台">
 
 <style>
-/* PWA 图库 / 安装引导（tools/build_pwa.py 注入，仅 pwa 版） */
-.gal-note{font-size:12px;color:var(--mute);margin:0 0 10px}
-.gal-filter{display:flex;gap:8px;overflow-x:auto;padding:0 0 12px;-webkit-overflow-scrolling:touch}
-.gal-chip{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--ink2);
-  border-radius:999px;padding:6px 12px;font-size:13px;line-height:1.2}
-.gal-chip i{font-style:normal;color:var(--faint);font-size:11px;margin-left:2px}
-.gal-chip.on{background:var(--chip);border-color:#b9cdf0;color:var(--ink);font-weight:600}
-.gal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.gal-card{display:flex;flex-direction:column;padding:0;border:1px solid var(--line);
-  border-radius:12px;background:var(--panel);overflow:hidden;text-align:left}
-.gal-card img{display:block;width:100%;height:150px;object-fit:cover;object-position:top center;background:var(--panel3)}
-.gc-t{display:block;padding:6px 8px 0;font-size:13px;color:var(--ink);white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis}
-.gc-s{display:block;padding:2px 8px 7px;font-size:11px;color:var(--mute);white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis}
-.gal-view{position:fixed;inset:0;z-index:80;background:rgba(11,16,26,.94);display:flex;flex-direction:column}
-.gv-bar{display:flex;align-items:center;gap:10px;padding:max(10px,env(safe-area-inset-top)) 14px 10px;
-  color:#fff;font-size:13px}
-.gv-bar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.gv-x{width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.14);
-  color:#fff;font-size:22px;line-height:1}
-.gv-body{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:4px 8px}
-.gv-body img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;background:#fff}
-.gv-foot{display:flex;justify-content:center;gap:10px;padding:10px 14px max(14px,env(safe-area-inset-bottom))}
-.gv-foot a{color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:999px;padding:8px 18px;font-size:13px}
+/* PWA 安装引导（tools/build_pwa.py 注入，仅 pwa 版；图库样式在主页面本身） */
 .pwa-tip{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:70;
   display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;
   background:#0f1a2b;color:#fff;font-size:13px;line-height:1.45;box-shadow:0 8px 26px rgba(6,14,28,.3)}
@@ -3397,6 +3373,38 @@ input{border:1px solid var(--line);border-radius:10px;background:var(--panel);co
 #detail .card{margin-top:8px;padding:10px 12px}
 #detail .card h3{margin-bottom:6px}
 #detail .card .sub{margin:-3px 0 6px}
+
+/* ---------------- 图库（2026-11-22） ----------------
+   周图 / 分类合成图 / 分时图。清单 gallery.json 由 monitor.yml 生成，
+   图与清单一起落在公开镜像 data/，App 和 PWA 共用同一份。 */
+.gal-note{font-size:12px;color:var(--mute);margin:0 0 10px}
+.gal-filter{display:flex;gap:8px;overflow-x:auto;padding:0 0 12px;-webkit-overflow-scrolling:touch}
+.gal-chip{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--ink2);
+  border-radius:999px;padding:6px 12px;font-size:13px;line-height:1.2}
+.gal-chip i{font-style:normal;color:var(--faint);font-size:11px;margin-left:2px}
+.gal-chip.on{background:var(--chip);border-color:#b9cdf0;color:var(--ink);font-weight:600}
+.gal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gal-card{display:flex;flex-direction:column;padding:0;border:1px solid var(--line);
+  border-radius:12px;background:var(--panel);overflow:hidden;text-align:left}
+.gal-card img{display:block;width:100%;height:150px;object-fit:cover;object-position:top center;
+  background:var(--panel3)}
+.gc-t{display:block;padding:6px 8px 0;font-size:13px;color:var(--ink);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.gc-s{display:block;padding:2px 8px 7px;font-size:11px;color:var(--mute);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+.gal-view{position:fixed;inset:0;z-index:80;background:rgba(11,16,26,.94);
+  display:flex;flex-direction:column}
+.gv-bar{display:flex;align-items:center;gap:10px;
+  padding:max(10px,env(safe-area-inset-top)) 14px 10px;color:#fff;font-size:13px}
+.gv-bar span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gv-x{width:36px;height:36px;border:0;border-radius:50%;background:rgba(255,255,255,.14);
+  color:#fff;font-size:22px;line-height:1}
+.gv-body{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:4px 8px}
+.gv-body img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;background:#fff}
+.gv-foot{display:flex;justify-content:center;gap:10px;
+  padding:10px 14px max(14px,env(safe-area-inset-bottom))}
+.gv-foot a{color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:999px;
+  padding:8px 18px;font-size:13px}
 </style>
 </head>
 <body>
@@ -3705,92 +3713,7 @@ githubXhsTopics = async function(){
 };
 
 
-/* ===== PWA 扩展：图库 / 安装引导 / 更新提示（tools/build_pwa.py 注入） ===== */
-const PWA_IMG_BASE = 'https://raw.githubusercontent.com/santady/douyin-monitor-pwa/mirror/data/charts/';
-const GAL_KINDS = {combined: '合成图', week: '周图', segment: '分时图', other: '其他'};
-let pwaGalCache = null, pwaGalKind = 'all';
-
-function pwaImgUrl(name){ return PWA_IMG_BASE + encodeURIComponent(name); }
-function pwaSize(n){
-  if (!n) return '';
-  return n >= 1048576 ? (n / 1048576).toFixed(1) + 'M' : Math.round(n / 1024) + 'K';
-}
-function pwaDay(ts){
-  if (!ts) return '';
-  const d = new Date(ts * 1000), p = n => (n < 10 ? '0' : '') + n;
-  return (d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
-}
-async function pwaGalleryData(){
-  if (pwaGalCache) return pwaGalCache;
-  const o = await readJson('gallery.json');
-  pwaGalCache = (o && o.items) ? o.items : (Array.isArray(o) ? o : []);
-  return pwaGalCache;
-}
-function pwaGalChips(items){
-  const counts = {all: items.length};
-  items.forEach(it => { counts[it.k] = (counts[it.k] || 0) + 1; });
-  return '<div class="gal-filter">' +
-    [['all', '全部'], ['combined', '合成图'], ['week', '周图'], ['segment', '分时图']]
-      .filter(([k]) => k === 'all' || counts[k])
-      .map(([k, t]) => '<button class="gal-chip' + (pwaGalKind === k ? ' on' : '') +
-        '" type="button" data-gk="' + k + '">' + t +
-        (k !== 'all' ? ' <i>' + counts[k] + '</i>' : '') + '</button>').join('') + '</div>';
-}
-function pwaGalGrid(items){
-  const show = items.filter(it => pwaGalKind === 'all' || it.k === pwaGalKind);
-  if (!show.length) return '<div class="empty">这类图还没有生成</div>';
-  return '<div class="gal-grid">' + show.map(it =>
-    '<button class="gal-card" type="button" data-gal="' + stEsc(it.n) + '">' +
-      '<img loading="lazy" decoding="async" src="' + stEsc(pwaImgUrl(it.n)) +
-        '" alt="' + stEsc(it.t) + '">' +
-      '<span class="gc-t">' + stEsc(it.t) + '</span>' +
-      '<span class="gc-s">' + (GAL_KINDS[it.k] || '其他') + ' · ' + pwaDay(it.ts) +
-        (it.bytes ? ' · ' + pwaSize(it.bytes) : '') + '</span>' +
-    '</button>').join('') + '</div>';
-}
-function pwaGalView(it){
-  const tip = document.querySelector('.pwa-tip');   /* 浮层上别叠安装提示 */
-  if (tip){ tip.remove(); try{ localStorage.setItem('pwa.tip', 'off'); }catch(e){} }
-  const mask = document.createElement('div');
-  mask.className = 'gal-view';
-  mask.innerHTML =
-    '<div class="gv-bar"><span>' + stEsc(it.t) + ' · ' + (GAL_KINDS[it.k] || '') + '</span>' +
-      '<button class="gv-x" type="button" aria-label="关闭">×</button></div>' +
-    '<div class="gv-body"><img src="' + stEsc(pwaImgUrl(it.n)) + '" alt="' + stEsc(it.t) + '"></div>' +
-    '<div class="gv-foot"><a href="' + stEsc(pwaImgUrl(it.n)) +
-      '" target="_blank" rel="noopener">原图 / 下载</a></div>';
-  document.body.appendChild(mask);
-  const close = () => { if (mask.parentNode) mask.remove(); };
-  mask.querySelector('.gv-x').onclick = close;
-  mask.querySelector('.gv-body').onclick = close;
-}
-async function openPwaGallery(){
-  openSheet('图库 · 周图 / 合成图 / 分时图',
-    '<div id="galWrap"><div class="empty">加载中…</div></div>');
-  let items;
-  try { items = await pwaGalleryData(); }
-  catch(e){
-    $('#galWrap').innerHTML = '<div class="empty">图库清单读取失败：' + stEsc(e.message) + '</div>';
-    return;
-  }
-  pwaGalKind = 'all';
-  const paint = () => {
-    const box = $('#galWrap');
-    if (!box) return;
-    box.innerHTML = '<div class="gal-note">图来自公开镜像；点开看原图，长按或「原图 / 下载」保存。</div>' +
-      pwaGalChips(items) + pwaGalGrid(items);
-    box.querySelectorAll('[data-gk]').forEach(b => {
-      b.onclick = () => { pwaGalKind = b.dataset.gk; paint(); };
-    });
-    box.querySelectorAll('[data-gal]').forEach(b => {
-      b.onclick = () => {
-        const it = items.find(x => x.n === b.dataset.gal);
-        if (it) pwaGalView(it);
-      };
-    });
-  };
-  paint();
-}
+/* ===== PWA 安装引导 / 更新提示（tools/build_pwa.py 注入，仅 pwa 版） ===== */
 function pwaInstallTip(){
   try{
     if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return;
@@ -3816,11 +3739,7 @@ function pwaInstallTip(){
 window.addEventListener('pwa:update', () => {
   try { toast('新版本已就绪：下拉刷新或重新打开即生效'); } catch(e) {}
 });
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('actGallery');
-  if (btn) btn.onclick = () => openPwaGallery().catch(e => toast('图库打不开：' + e.message, true));
-  setTimeout(pwaInstallTip, 2500);
-});
+document.addEventListener('DOMContentLoaded', () => setTimeout(pwaInstallTip, 2500));
 
 const b64u8 = b64 => { const bin = atob(b64.replace(/\n/g, '')); const u = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
@@ -5198,6 +5117,94 @@ $('#barSpan').addEventListener('change', e => {
 });
 /* 快捷档位由 #trendQuick 处理；日期控件交给 applyTrendDates()，曲线与明细都走同一窗口。 */
 
+/* ---------------- 图库（周图 / 合成图 / 分时图） ----------------
+   清单与图由 monitor.yml 同步到公开镜像（data/gallery.json、data/charts/），
+   App 和 PWA 读同一份；App 走 Gitee 时用的是仓库根目录的 gallery.json。
+   图放在公开镜像上，App 不必为了看图再走一遍仓库接口。 */
+const GAL_IMG_BASE = 'https://raw.githubusercontent.com/santady/douyin-monitor-pwa/mirror/data/charts/';
+const GAL_KINDS = {combined: '合成图', week: '周图', segment: '分时图', other: '其他'};
+let galCache = null, galKind = 'all';
+
+function galImgUrl(name){ return GAL_IMG_BASE + encodeURIComponent(name); }
+function galSize(n){
+  if (!n) return '';
+  return n >= 1048576 ? (n / 1048576).toFixed(1) + 'M' : Math.round(n / 1024) + 'K';
+}
+function galDay(ts){
+  if (!ts) return '';
+  const d = new Date(ts * 1000), p = n => (n < 10 ? '0' : '') + n;
+  return (d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+async function galData(){
+  if (galCache) return galCache;
+  const o = await readJson('gallery.json');
+  galCache = (o && o.items) ? o.items : (Array.isArray(o) ? o : []);
+  return galCache;
+}
+function galChips(items){
+  const counts = {all: items.length};
+  items.forEach(it => { counts[it.k] = (counts[it.k] || 0) + 1; });
+  return '<div class="gal-filter">' +
+    [['all', '全部'], ['combined', '合成图'], ['week', '周图'], ['segment', '分时图']]
+      .filter(([k]) => k === 'all' || counts[k])
+      .map(([k, t]) => '<button class="gal-chip' + (galKind === k ? ' on' : '') +
+        '" type="button" data-gk="' + k + '">' + t +
+        (k !== 'all' ? ' <i>' + counts[k] + '</i>' : '') + '</button>').join('') + '</div>';
+}
+function galGrid(items){
+  const show = items.filter(it => galKind === 'all' || it.k === galKind);
+  if (!show.length) return '<div class="empty">这类图还没有生成</div>';
+  return '<div class="gal-grid">' + show.map(it =>
+    '<button class="gal-card" type="button" data-gal="' + stEsc(it.n) + '">' +
+      '<img loading="lazy" decoding="async" src="' + stEsc(galImgUrl(it.n)) +
+        '" alt="' + stEsc(it.t) + '">' +
+      '<span class="gc-t">' + stEsc(it.t) + '</span>' +
+      '<span class="gc-s">' + (GAL_KINDS[it.k] || '其他') + ' · ' + galDay(it.ts) +
+        (it.bytes ? ' · ' + galSize(it.bytes) : '') + '</span>' +
+    '</button>').join('') + '</div>';
+}
+function galView(it){
+  const mask = document.createElement('div');
+  mask.className = 'gal-view';
+  mask.innerHTML =
+    '<div class="gv-bar"><span>' + stEsc(it.t) + ' · ' + (GAL_KINDS[it.k] || '') + '</span>' +
+      '<button class="gv-x" type="button" aria-label="关闭">×</button></div>' +
+    '<div class="gv-body"><img src="' + stEsc(galImgUrl(it.n)) + '" alt="' + stEsc(it.t) + '"></div>' +
+    '<div class="gv-foot"><a href="' + stEsc(galImgUrl(it.n)) +
+      '" target="_blank" rel="noopener">原图 / 下载</a></div>';
+  document.body.appendChild(mask);
+  const close = () => { if (mask.parentNode) mask.remove(); };
+  mask.querySelector('.gv-x').onclick = close;
+  mask.querySelector('.gv-body').onclick = close;
+}
+async function openGallery(){
+  openSheet('图库 · 周图 / 合成图 / 分时图',
+    '<div id="galWrap"><div class="empty">加载中…</div></div>');
+  let items;
+  try { items = await galData(); }
+  catch(e){
+    $('#galWrap').innerHTML = '<div class="empty">图库清单读取失败：' + stEsc(e.message) + '</div>';
+    return;
+  }
+  galKind = 'all';
+  const paint = () => {
+    const box = $('#galWrap');
+    if (!box) return;
+    box.innerHTML = '<div class="gal-note">图来自公开镜像；点开看原图，长按或「原图 / 下载」保存。</div>' +
+      galChips(items) + galGrid(items);
+    box.querySelectorAll('[data-gk]').forEach(b => {
+      b.onclick = () => { galKind = b.dataset.gk; paint(); };
+    });
+    box.querySelectorAll('[data-gal]').forEach(b => {
+      b.onclick = () => {
+        const it = items.find(x => x.n === b.dataset.gal);
+        if (it) galView(it);
+      };
+    });
+  };
+  paint();
+}
+
 /* ---------------- 报表 ---------------- */
 function mdLite(md){
   const inline = t => stEsc(t).replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
@@ -6095,6 +6102,7 @@ document.querySelectorAll('.ptab').forEach(b => b.onclick = () => {
 $('#btnRefresh').onclick = () => refresh();
 $('#btnGear').onclick = openSettings;
 $('#actReport').onclick = () => openReport(S.pf);
+$('#actGallery').onclick = () => openGallery().catch(e => toast('图库打不开：' + e.message, true));
 $('#actCollect').onclick = actCollect;
 $('#actDouban').onclick = openDouban;
 $('#btnAddTopic').onclick = openAdd;
