@@ -3584,10 +3584,10 @@ function gh(path, opt){
 }
 // 数据源（2026-11-08 起）：Gitee 仓库（国内直连快）。raw 端点不认 API 令牌，
 // 走 contents API + base64（文件都在 1MB 内：history ~90KB、榜单图 ~160KB）。
-async function gieFile(path){
+async function gieFile(path, force){
   const url = 'https://gitee.com/api/v5/repos/' + CFG.giteeRepo + '/contents/' + path +
     '?ref=main&access_token=' + encodeURIComponent(CFG.giteeToken);
-  const r = await fetch(url, {headers: {'User-Agent': 'monitor-app'}});
+  const r = await fetch(url, {cache: force ? 'no-store' : 'default', headers: {'User-Agent': 'monitor-app'}});
   if (r.status === 404) throw new Error(path + ' 不存在');
   if (r.status === 401 || r.status === 403) throw new Error('Gitee 令牌无效：去设置里更新');
   if (!r.ok) throw new Error(path + ' HTTP ' + r.status);
@@ -3638,7 +3638,7 @@ async function pwaStaticFile(path, force){
 const __pwaGieFile = gieFile;
 gieFile = async function(path, force){
   if (!CFG.giteeToken && !CFG.token) return pwaStaticFile(path, force);
-  if (CFG.giteeToken) return __pwaGieFile(path);
+  if (CFG.giteeToken) return __pwaGieFile(path, force);
   const r = await gh('/repos/' + CFG.repo + '/contents/' + path + '?ref=main',
                      {cache: force ? 'no-store' : 'default'});
   if (r.status === 404) throw new Error(path + ' 不存在');
