@@ -24,7 +24,7 @@
 .gal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .gal-card{display:flex;flex-direction:column;padding:0;border:1px solid var(--line);
   border-radius:12px;background:var(--panel);overflow:hidden;text-align:left}
-.gal-card img{display:block;width:100%;height:auto;min-height:70px;object-fit:cover;background:var(--panel3)}
+.gal-card img{display:block;width:100%;height:150px;object-fit:cover;object-position:top center;background:var(--panel3)}
 .gc-t{display:block;padding:6px 8px 0;font-size:13px;color:var(--ink);white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis}
 .gc-s{display:block;padding:2px 8px 7px;font-size:11px;color:var(--mute);white-space:nowrap;
@@ -3749,6 +3749,8 @@ function pwaGalGrid(items){
     '</button>').join('') + '</div>';
 }
 function pwaGalView(it){
+  const tip = document.querySelector('.pwa-tip');   /* 浮层上别叠安装提示 */
+  if (tip){ tip.remove(); try{ localStorage.setItem('pwa.tip', 'off'); }catch(e){} }
   const mask = document.createElement('div');
   mask.className = 'gal-view';
   mask.innerHTML =
