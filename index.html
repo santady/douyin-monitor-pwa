@@ -3601,11 +3601,11 @@ async function gieList(dir){
   if (!r.ok) throw new Error('列目录失败 HTTP ' + r.status);
   return await r.json();
 }
-async function readText(path){ const f = await gieFile(path); return new TextDecoder().decode(f.bytes); }
-async function readBytes(path){ return (await gieFile(path)).bytes; }
-async function readJson(path){ return JSON.parse(await readText(path)); }
-async function readJsonGz(path){
-  const bytes = (await gieFile(path)).bytes;
+async function readText(path, force){ const f = await gieFile(path, force); return new TextDecoder().decode(f.bytes); }
+async function readBytes(path, force){ return (await gieFile(path, force)).bytes; }
+async function readJson(path, force){ return JSON.parse(await readText(path, force)); }
+async function readJsonGz(path, force){
+  const bytes = (await gieFile(path, force)).bytes;
   if (bytes[0] === 0x1f && bytes[1] === 0x8b){
     const st = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
     return JSON.parse(await new Response(st).text());
@@ -3616,7 +3616,7 @@ async function readJsonGz(path){
 /* PWA：默认从公开只读镜像读数据；没有镜像或用户填了令牌时才走 API。 */
 const PWA_DATA_BASE = 'https://raw.githubusercontent.com/santady/douyin-monitor-pwa/mirror/data/';
 const PWA_DATA_CACHE = 'dtp-data-v2';
-async function pwaStaticFile(path){
+async function pwaStaticFile(path, force){
   const url = PWA_DATA_BASE + path.split('/').map(encodeURIComponent).join('/');
   let cache = null;
   try { cache = await caches.open(PWA_DATA_CACHE); } catch (e) {}
@@ -3625,7 +3625,7 @@ async function pwaStaticFile(path){
     if (r.ok && cache) await cache.put(url, r.clone());
     return r;
   }).catch(() => null);
-  if (cached){
+  if (cached && !force){
     /* 先用本地缓存秒开；后台把新数据写回缓存，下一次打开生效。 */
     refresh.catch(() => {});
     return {sha: '', bytes: new Uint8Array(await cached.arrayBuffer())};
@@ -3636,17 +3636,19 @@ async function pwaStaticFile(path){
   return {sha: '', bytes: new Uint8Array(await r.arrayBuffer())};
 }
 const __pwaGieFile = gieFile;
-gieFile = async function(path){
-  if (!CFG.giteeToken && !CFG.token) return pwaStaticFile(path);
+gieFile = async function(path, force){
+  if (!CFG.giteeToken && !CFG.token) return pwaStaticFile(path, force);
   if (CFG.giteeToken) return __pwaGieFile(path);
-  const r = await gh('/repos/' + CFG.repo + '/contents/' + path + '?ref=main');
+  const r = await gh('/repos/' + CFG.repo + '/contents/' + path + '?ref=main',
+                     {cache: force ? 'no-store' : 'default'});
   if (r.status === 404) throw new Error(path + ' 不存在');
   if (r.status === 401 || r.status === 403) throw new Error('GitHub 令牌无效：去设置里更新');
   if (!r.ok) throw new Error(path + ' HTTP ' + r.status);
   const o = await r.json();
   if (o.content) return {sha: o.sha, bytes: b64u8((o.content || '').replace(/\n/g, ''))};
   if (o.download_url){
-    const rr = await fetch(o.download_url, {headers: {'Authorization': 'Bearer ' + CFG.token, 'User-Agent': 'monitor-app'}});
+    const rr = await fetch(o.download_url, {cache: force ? 'no-store' : 'default',
+      headers: {'Authorization': 'Bearer ' + CFG.token, 'User-Agent': 'monitor-app'}});
     if (!rr.ok) throw new Error(path + ' 下载失败 HTTP ' + rr.status);
     return {sha: o.sha, bytes: new Uint8Array(await rr.arrayBuffer())};
   }
@@ -3658,13 +3660,13 @@ gieList = async function(dir){
   return [];
 };
 const __pwaGithubTopics = githubTopics;
-githubTopics = async function(){
-  if (!CFG.token){ return {list: await readJson('topics.json'), sha: ''}; }
+githubTopics = async function(force){
+  if (!CFG.token){ return {list: await readJson('topics.json', force), sha: ''}; }
   return __pwaGithubTopics();
 };
 const __pwaGithubXhsTopics = githubXhsTopics;
-githubXhsTopics = async function(){
-  if (!CFG.token){ return {list: await readJson('xhs_topics.json'), sha: ''}; }
+githubXhsTopics = async function(force){
+  if (!CFG.token){ return {list: await readJson('xhs_topics.json', force), sha: ''}; }
   return __pwaGithubXhsTopics();
 };
 
@@ -3711,20 +3713,20 @@ function paintCache(){
     if (c && Array.isArray(c.rows)){ S.data[S.pf] = {...c, cached: true}; renderAll(); }
   }catch(e){}
 }
-async function refresh(pf){
+async function refresh(pf, force){
   pf = pf || S.pf;
   const request = ++S.requests[pf];
   S.loading[pf] = true;
   const btn = $('#btnRefresh'); btn.classList.add('spin');
   try{
-    const topics = pf === 'xhs' ? await readJson('xhs_topics.json') : (await githubTopics()).list;
-    const history = pf === 'xhs' ? await readJsonGz('xhs_history.json.gz') : await readJsonGz('history.json.gz');
+    const topics = pf === 'xhs' ? await readJson('xhs_topics.json', force) : (await githubTopics(force)).list;
+    const history = pf === 'xhs' ? await readJsonGz('xhs_history.json.gz', force) : await readJsonGz('history.json.gz', force);
     // 小红书讨论数（App 网关口径，精确到个位）：单独一份文件，按批时间戳落盘，
     // 小时明细和「讨论数 24 小时」卡共用。加载失败只影响这一列，不拖垮主数据。
     let discuss = null, discussionError = '';
     if (pf === 'xhs'){
       try{
-        const raw = await readJsonGz('xhs_topic_discuss.json.gz');
+        const raw = await readJsonGz('xhs_topic_discuss.json.gz', force);
         const byPid = {};
         Object.keys(raw).forEach(k => {
           const ts = +k; if (!isFinite(ts)) return;
@@ -5954,7 +5956,7 @@ document.querySelectorAll('.ptab').forEach(b => b.onclick = () => {
   paintCache();                       // 只有内存里没数据时它才会真去读缓存
   if (!S.data[S.pf]) refresh(S.pf); else renderAll();
 });
-$('#btnRefresh').onclick = () => refresh();
+$('#btnRefresh').onclick = () => refresh(undefined, true);
 $('#btnGear').onclick = openSettings;
 $('#actReport').onclick = () => openReport(S.pf);
 $('#actCollect').onclick = actCollect;
