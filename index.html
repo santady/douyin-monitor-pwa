@@ -4630,8 +4630,10 @@ function drawChart(){
         const bx = left + i * (bw + gap);
         const y = Y(p.v), h = Math.max(1, Math.abs(y - y0));
         const top = p.v >= 0 ? y : y0;
-        g.fillStyle = p.v < 0 ? DOWN : ACC;
-        g.globalAlpha = s.kind === 'yday' ? .34 : s.kind === 'cmp' ? .7 : .9;
+        /* 对比话题必须用图例里的橙色；以前这里恒用 ACC，
+           两条柱全蓝，只有图例是橙的（2026-11-22 用户截图反馈）。 */
+        g.fillStyle = p.v < 0 ? DOWN : (s.ci ? CMP : ACC);
+        g.globalAlpha = s.kind === 'yday' ? .34 : .9;
         g.beginPath();
         if (g.roundRect) g.roundRect(bx, top, bw, h, Math.min(2.5, bw / 2));
         else g.rect(bx, top, bw, h);
@@ -4730,24 +4732,38 @@ function drawChart(){
   const dailyNote = S.range >= 7 && !barMode
     ? (S.mode === 'total' ? ' · 按自然日取当天首条快照' : ' · 按自然日汇总（不含跨日首段）')
     : '';
+  /* 柱状并排说明按实际存在的线生成：只有对比话题时不能再写「左浅（昨天）」。
+     浅蓝只在勾了「对比昨天」时存在；对比话题固定用橙色，和左上图例同色。 */
+  const barSeries = lines.filter(s => s.kind !== 'xhs');
+  const barHasYday = barSeries.some(s => s.kind === 'yday');
+  const barHasCmp = barSeries.some(s => s.kind === 'cmp');
+  const barUnit = dayBar ? '天' : barSpan === 3600 ? '档' : (barSpan / 3600) + ' 小时';
+  const barColorParts = [];
+  if (barHasYday) barColorParts.push('浅蓝=昨天');
+  barColorParts.push('蓝=今天');
+  if (barHasCmp) barColorParts.push('橙=对比');
+  const barGroupNote = barSeries.length > 1
+    ? ' · 每' + barUnit + '并排（' + barColorParts.join('、') + '）'
+    : '';
   sub.textContent = (dataAt ? '数据截至 ' + fmtDataAt(dataAt) + ' · ' : '')
     + (barMode
     ? (dayBar ? '柱高 = 当天各小时增量之和，纵轴单位「万」'
               : barSpan === 3600 ? '柱高 = 那一小时的增量，纵轴单位「万」'
               : '柱高 = 每 ' + (barSpan / 3600) + ' 小时各档增量之和，纵轴单位「万」')
-      + (lines.length > 1 ? ' · 每' + (dayBar ? '天' : barSpan === 3600 ? '档' : (barSpan / 3600) + ' 小时') + '并排，左浅（昨天）右实（今天）' : '')
+      + barGroupNote
     : S.mode === 'inc'
       ? '每个点是相对上一整点档的增量，纵轴单位「万」'
       : '累计播放量快照')
     + dailyNote
     + (!barMode && lines.length > 1 ? ' · 含 ' + (lines.length - 1) + ' 条对照线' : '');
   const hasY = lines.some(s => s.ci === 0 && s.dash);
-  const hasC = lines.some(s => s.ci > 0);
+  const hasC = lines.some(s => s.kind === 'cmp');
   const tips = [];
   if (S.cmpYday) tips.push(hasY
     ? (barMode ? '浅色柱是昨天同一档' : '「昨天」= 主线整条往前挪 24 小时，同色虚线')
     : '「昨天」这个范围里没数据（历史不足一天）');
-  if (S.cmpTopic) tips.push(hasC ? '异色虚线 = 对比话题' : '对比话题在这个范围里没数据');
+  if (S.cmpTopic) tips.push(hasC ? (barMode ? '橙色柱 = 对比话题' : '异色虚线 = 对比话题')
+                                : '对比话题在这个范围里没数据');
   if (S.cmpXhs){
     const hasX = lines.some(s => s.kind === 'xhs');
     const otherName = S.pf === 'xhs' ? '抖音' : '小红书';
