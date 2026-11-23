@@ -3013,7 +3013,7 @@ input{border:1px solid var(--line);border-radius:10px;background:var(--panel);co
 .ptab{flex:1;padding:9px 0;border-radius:12px;text-align:center;font-size:var(--fs-4);font-weight:650;
   background:var(--panel);border:1px solid var(--line);color:var(--ink2)}
 .ptab.on.dy{background:var(--accent);border-color:var(--accent);color:#fff}
-.ptab.on.xhs{background:#d64b86;border-color:#d64b86;color:#fff}
+.ptab.on.xhs{background:var(--accent);border-color:var(--accent);color:#fff}
 
 /* 汇总卡 */
 .sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 14px 0}
@@ -3293,7 +3293,7 @@ input{border:1px solid var(--line);border-radius:10px;background:var(--panel);co
 .ptabs{flex:none;display:flex;gap:2px;padding:3px;background:var(--panel2);border:1px solid var(--line);border-radius:10px}
 .ptab{flex:none;padding:5px 9px;border:0;border-radius:7px;background:transparent;font-size:11.5px;line-height:1.1;font-weight:600}
 .ptab.on.dy{background:var(--accent);color:#fff}
-.ptab.on.xhs{background:#d64b86;color:#fff}
+.ptab.on.xhs{background:var(--accent);color:#fff}
 .acts{display:flex;gap:4px;padding:8px 12px 0;background:transparent}
 .act{flex:1 1 0;min-width:0;height:44px;flex-direction:row;gap:4px;padding:0 4px;
   border-radius:9px;box-shadow:none;font-size:10px;font-weight:600;letter-spacing:0}
@@ -3454,7 +3454,7 @@ input,select,textarea{color:var(--ink);border:1px solid var(--line);background:v
   color:var(--ink2);background:transparent;transition:background .16s,color .16s,box-shadow .16s}
 .ptab:hover{color:var(--ink)}
 .ptab.on.dy{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.22)}
-.ptab.on.xhs{background:#c93f75;color:#fff;box-shadow:0 2px 8px rgba(201,63,117,.2)}
+.ptab.on.xhs{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.22)}
 
 /* ---------- 首页布局 ---------- */
 #home{
@@ -4050,7 +4050,7 @@ input,select,textarea{color:var(--ink);border:1px solid var(--line);background:v
         </div>
         <div class="ctr-1" id="cmpRow">
           <button id="btnYday" title="同一条曲线整条往前挪 24 小时，同色虚线叠一条">对比昨天</button>
-          <button id="btnXhsOv" title="同名小红书话题的浏览量（粉色虚线）：量纲不同，同轴看走势形状。首次点开会取另一侧平台数据">叠加小红书</button>
+          <button id="btnXhsOv" title="同名另一平台话题的指标（虚线）：量纲不同，同轴看走势形状。首次点开会取另一侧平台数据">叠加小红书</button>
           <button id="btnChartPng" title="把当前趋势图导出为 PNG（系统「保存到文件」）">导出图</button>
         </div>
       </details>
@@ -4268,19 +4268,29 @@ async function refresh(pf, force){
   const request = ++S.requests[pf];
   S.loading[pf] = true;
   const btn = $('#btnRefresh'); btn.classList.add('spin');
+  if (pf === S.pf && !(S.data[pf] && S.data[pf].rows && S.data[pf].rows.length)) renderLoading();
   try{
-    const topics = pf === 'xhs' ? await readJson('xhs_topics.json', force) : (await githubTopics(force)).list;
-    const history = pf === 'xhs' ? await readJsonGz('xhs_history.json.gz', force) : await readJsonGz('history.json.gz', force);
+    /* 三份文件并行拉：小红书原先 topics → history → discuss 串行，
+       切过去要等 6–7 秒；并行后首屏只等最慢的一份。讨论数失败仍只影响这一列。 */
+    let discussionError = '';
+    const topicsP = pf === 'xhs' ? readJson('xhs_topics.json', force)
+      : githubTopics(force).then(x => x.list);
+    const historyP = readJsonGz(pf === 'xhs' ? 'xhs_history.json.gz' : 'history.json.gz', force);
+    const discussP = pf === 'xhs'
+      ? readJsonGz('xhs_topic_discuss.json.gz', force).catch(e => {
+          discussionError = '讨论数加载失败：' + e.message; return null;
+        })
+      : Promise.resolve(null);
+    const [topics, history, rawDiscuss] = await Promise.all([topicsP, historyP, discussP]);
     // 小红书讨论数（App 网关口径，精确到个位）：单独一份文件，按批时间戳落盘，
-    // 小时明细和「讨论数 24 小时」卡共用。加载失败只影响这一列，不拖垮主数据。
-    let discuss = null, discussionError = '';
-    if (pf === 'xhs'){
+    // 小时明细和「讨论数 24 小时」卡共用。
+    let discuss = null;
+    if (pf === 'xhs' && rawDiscuss){
       try{
-        const raw = await readJsonGz('xhs_topic_discuss.json.gz', force);
         const byPid = {};
-        Object.keys(raw).forEach(k => {
+        Object.keys(rawDiscuss).forEach(k => {
           const ts = +k; if (!isFinite(ts)) return;
-          (raw[k] || []).forEach(r => {
+          (rawDiscuss[k] || []).forEach(r => {
             const pid = String(r.page_id || '');
             /* 与 xhs_metric._is_app 同一道闸：只认 App 网关的精确值。
                文件首批还留着话题分享 H5 页的万精度/封顶值（实测 511 行），
@@ -4476,8 +4486,32 @@ function persistListPrefs(){
   saveDashboardPrefs(S.pf, {q: S.q, cat: S.cat, sort: sharedSort});
   try{ localStorage.setItem(APP_DIM_KEY + S.pf, S.dim); }catch(e){}
 }
+function renderLoading(){
+  const name = S.pf === 'xhs' ? '小红书' : '抖音';
+  const box = $('#list');
+  if(box){
+    let html = '<div class="skeleton" role="status" aria-label="正在加载' + name + '数据">';
+    for(let i = 0; i < 8; i++){
+      html += '<div class="sk-row"><i class="sk-dot"></i><i class="sk-line' +
+        (i % 2 ? ' sk-short' : '') + '"></i><i class="sk-line" style="flex:0 0 62px"></i></div>';
+    }
+    box.innerHTML = html + '</div>';
+  }
+  const meta = $('#listMeta');
+  if(meta) meta.innerHTML = '<b>…</b><span>正在加载</span>';
+  const health = $('#health');
+  if(health) health.innerHTML = '<div class="dashboard-health-summary"><b>' + name +
+    '健康状态</b><span class="hh-kpi"><i>数据</i><em>加载中…</em></span></div>';
+  const sub = $('#sub');
+  if(sub){ sub.textContent = '正在打开' + name + '数据…'; sub.className = 't2'; }
+}
 function renderAll(){
   const data = D();
+  if(S.loading[S.pf] && !S.errors[S.pf] && !S.data[S.pf]){
+    $('#btnDel').hidden = false;
+    renderLoading();
+    return;
+  }
   if (S.cat && data.topics && !data.rows.some(r => r.cats.includes(S.cat))){
     S.cat = ''; persistListPrefs();
   }
@@ -4539,6 +4573,8 @@ function fmtH1Qoq(r){
 
 function renderList(){
   const box = $('#list');
+  /* 首次加载 / 切平台还没数据时铺骨架屏，避免把「没有匹配的话题」当成空数据。 */
+  if(S.loading[S.pf] && !S.errors[S.pf] && !S.data[S.pf]){ renderLoading(); return; }
   /* 榜单口径（2026-11-13）：24h 榜按 d1、1h 榜按 h1、1h环比榜按 h1qoq、
      24h环比榜按 qoq；同一份数据四套排名，行上显示的也就是排名用的那个数。 */
   const key = S.dim === 'qoq' ? 'qoq'
@@ -5529,6 +5565,17 @@ function unit(v){
   if (x >= 1e4) return (v / 1e4).toFixed(0) + ' 万';
   return String(Math.round(v));
 }
+/* 「叠加另一平台」按钮随当前平台换词：抖音页叠小红书，小红书页叠抖音。
+   图表和 legend 已按 other 平台取数，只有按钮文案原来写死成小红书。 */
+function syncOverlayLabel(){
+  const ov = $('#btnXhsOv');
+  if(!ov) return;
+  const other = S.pf === 'xhs' ? '抖音' : '小红书';
+  const metric = S.pf === 'xhs' ? '播放量' : '浏览量';
+  ov.textContent = '叠加' + other;
+  ov.title = '同名' + other + '话题的' + metric + '（虚线）：量纲不同，同轴看走势形状。首次点开会取另一侧平台数据';
+  ov.classList.toggle('on', S.cmpXhs);
+}
 /* 图表设置只保留「对比昨天」；对比话题统一走上方 chips 的「添加对比」，
    不再放第二个下拉入口。
    进详情、换平台、刷到新数据各同步一次按钮态；原来选的话题没了就退回空。 */
@@ -5537,8 +5584,7 @@ function fillCmpSel(){
   if(S.cmpTopic && !rows.some(r => r.ch_id === S.cmpTopic)) S.cmpTopic = '';
   const btn = $('#btnYday');
   if(btn) btn.classList.toggle('on', S.cmpYday);
-  const ov = $('#btnXhsOv');
-  if(ov) ov.classList.toggle('on', S.cmpXhs);
+  syncOverlayLabel();
 }
 $('#trendAddBtn').addEventListener('click', e => {
   e.stopPropagation();
@@ -6516,7 +6562,15 @@ document.querySelectorAll('.ptab').forEach(b => b.onclick = () => {
   restoreListPrefs();
   S.cmpTopic = '';
   paintCache();                       // 只有内存里没数据时它才会真去读缓存
-  if (!S.data[S.pf]) refresh(S.pf); else renderAll();
+  /* 启动时两个平台已经在并行拉数据；切过去时若那份请求还在飞，
+     直接等它完成（骨架屏会跟着渲染），不要重新发一遍把进度清零。 */
+  if (!S.data[S.pf]){
+    if (S.loading[S.pf]) renderLoading();
+    else refresh(S.pf);
+  }else{
+    renderAll();
+  }
+  syncOverlayLabel();
 });
 $('#btnRefresh').onclick = () => refresh(undefined, true);
 $('#btnGear').onclick = openSettings;
