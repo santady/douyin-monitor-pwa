@@ -4130,7 +4130,7 @@ input,select,textarea{color:var(--ink);border:1px solid var(--line);background:v
         </div>
         <div class="ctr-1" id="cmpRow">
           <button id="btnYday" title="同一条曲线整条往前挪 24 小时，同色虚线叠一条">对比昨天</button>
-          <button id="btnXhsOv" title="同名另一平台话题的指标（粉色虚线，读右侧独立坐标）：按各自量级缩放，不会因为数值差距被压成横线。首次点开会取另一侧平台数据">叠加小红书</button>
+          <button id="btnXhsOv" title="同名另一平台话题的指标（粉色线，读右侧独立坐标）：按各自量级缩放，不会因为数值差距被压成横线。首次点开会取另一侧平台数据">叠加小红书</button>
           <button id="btnChartPng" title="把当前趋势图导出为 PNG（系统「保存到文件」）">导出图</button>
         </div>
       </details>
@@ -5104,7 +5104,7 @@ function chartList(){
      （dy 台叠小红书浏览量，xhs 台叠抖音播放量）。App 不连服务端，
      另一侧数据由 ensureOverlayData 懒加载进 S.overlayCache 后这里同步取用；
      没加载到（还没取完 / 取失败）就先不画，开关下次重画会再试。
-     固定粉色虚线（kind='xhs'，drawChart 单独给它配色）；右侧独立纵轴，
+     固定粉色实线（kind='xhs'，drawChart 单独给它配色）；右侧独立纵轴，
      按各自量级缩放，绝对值可以直接对照。 */
   if (S.cmpXhs){
     const other = S.pf === 'xhs' ? 'dy' : 'xhs';
@@ -5120,7 +5120,7 @@ function chartList(){
           ? dailySeries(cs, from, to, S.mode)
           : seriesWindow(cs, from, to, S.mode, true)) : [];
         if (cp.length) out.push({name: nm + ' · ' + (other === 'xhs' ? '小红书' : '抖音'),
-                                 pts: cp, ci: 4, dash: true, kind: 'xhs'});
+                                 pts: cp, ci: 4, dash: false, kind: 'xhs'});
       }
     }
   }
@@ -5271,7 +5271,7 @@ function drawChart(targetCv, targetW, targetH, targetDpr){
   let barGeo = null;
   if (barMode) {
     /* 「叠加小红书」不进柱组（另一套量纲，混进播放量柱组没法读），
-       柱画完之后以粉色虚线叠在柱上方（见 barMode 分支末尾）。 */
+       柱画完之后以粉色实线叠在柱上方（见 barMode 分支末尾）。 */
     const rank = s => s.kind === 'yday' ? 0 : s.kind === 'cmp' ? 2 : 1;
     const ordered = lines.filter(s => s.kind !== 'xhs').sort((a, b) => rank(a) - rank(b));
     const idxOf = new Map(ordered.map((s, i) => [s, i]));
@@ -5297,7 +5297,7 @@ function drawChart(targetCv, targetW, targetH, targetDpr){
     : Xtime;
   const Y = v => H - padB - (v - vmin) / (vmax - vmin || 1) * (H - padT - padB);
   /* 右轴：只有叠加另一平台时存在。小红书/抖音各自按自己的量级缩放，
-     粉色虚线不再因为绝对值差距被压成一条贴着零线的横线。 */
+     粉色实线不再因为绝对值差距被压成一条贴着零线的横线。 */
   const overlayLines = lines.filter(s => s.kind === 'xhs');
   let Y2 = null, oTicks = [], oLabel = () => '';
   if (overlayLines.length) {
@@ -5385,15 +5385,13 @@ function drawChart(targetCv, targetW, targetH, targetDpr){
     g.strokeStyle = INK; g.globalAlpha = .28; g.lineWidth = 1;
     g.beginPath(); g.moveTo(padL, zy); g.lineTo(W - padR, zy); g.stroke();
     g.globalAlpha = 1; g.lineWidth = 1;
-    /* 「叠加小红书」在柱状下以粉色虚线叠在柱上方，X 走同一套档位网格。 */
+    /* 「叠加小红书」在柱状下以粉色实线叠在柱上方，X 走同一套档位网格。 */
     lines.filter(s => s.kind === 'xhs').forEach(s => {
       const yMap = Y2 || Y;
       g.strokeStyle = '#d64b86'; g.lineWidth = 2; g.lineJoin = 'round';
-      g.setLineDash([6, 5]);
       g.beginPath();
       s.pts.forEach((p, i) => { const x = X(p.x), y = yMap(p.v); i ? g.lineTo(x, y) : g.moveTo(x, y); });
       g.stroke();
-      g.setLineDash([]);
     });
   } else {
     // 面积：多话题也各自铺一层低透明色，才看得出各自的体量；右轴叠加线不铺面积
@@ -5405,7 +5403,7 @@ function drawChart(targetCv, targetW, targetH, targetDpr){
       g.lineTo(X(pts[pts.length - 1].x), Y(vmin)); g.lineTo(X(pts[0].x), Y(vmin)); g.closePath();
       g.fillStyle = s.ci ? 'rgba(217,102,58,.08)' : 'rgba(47,111,235,.10)'; g.fill();
     });
-    // 折线：主线先画，虚线后画（压在上面才看得见）；叠加小红书固定粉色
+    // 折线：主线先画，虚线后画（压在上面才看得见）；叠加小红书固定粉色实线
     lines.forEach(s => {
       const yMap = s.kind === 'xhs' && Y2 ? Y2 : Y;
       g.strokeStyle = s.kind === 'xhs' ? '#d64b86' : (s.ci ? CMP : ACC);
@@ -5508,7 +5506,7 @@ function drawChart(targetCv, targetW, targetH, targetDpr){
     const hasX = lines.some(s => s.kind === 'xhs');
     const otherName = S.pf === 'xhs' ? '抖音' : '小红书';
     tips.push(hasX
-      ? '粉色虚线 = 同名' + otherName + '话题的' + (S.pf === 'xhs' ? '播放量' : '浏览量')
+      ? '粉色线 = 同名' + otherName + '话题的' + (S.pf === 'xhs' ? '播放量' : '浏览量')
         + '（粉色走右轴，两侧各自按自己的量级缩放）'
       : '同名' + otherName + '话题在这个范围里没数据（可能另一侧还没加这个话题）');
   }
@@ -5736,7 +5734,7 @@ function syncOverlayLabel(){
   const other = S.pf === 'xhs' ? '抖音' : '小红书';
   const metric = S.pf === 'xhs' ? '播放量' : '浏览量';
   ov.textContent = '叠加' + other;
-  ov.title = '同名' + other + '话题的' + metric + '（粉色虚线，读右侧独立坐标）：按各自量级缩放，不会因为数值差距被压成横线。首次点开会取另一侧平台数据';
+  ov.title = '同名' + other + '话题的' + metric + '（粉色线，读右侧独立坐标）：按各自量级缩放，不会因为数值差距被压成横线。首次点开会取另一侧平台数据';
   ov.classList.toggle('on', S.cmpXhs);
 }
 /* 图表设置只保留「对比昨天」；对比话题统一走上方 chips 的「添加对比」，
