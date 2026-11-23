@@ -2104,10 +2104,10 @@ var DTPTopicAdd = (function(){
 .labx-chart-empty{padding:28px 8px; color:var(--mute); text-align:center; font-size:var(--fs-2)}
 .labx-table-head{padding:12px 16px 8px; border-top:1px solid var(--line)}
 .labx-table-wrap{max-height:34vh; overflow:auto; border-bottom:1px solid var(--line)}
-.labx-table{width:100%; border-collapse:collapse; font-size:var(--fs-2); font-variant-numeric:tabular-nums}
-/* 2026-11-23 用户反馈：列名和数据不对齐。表头改成和数据同向：
-   时间列左对齐，数值列右对齐，读的时候一眼对得上。 */
-.labx-table th,.labx-table td{padding:7px 6px; border-bottom:1px solid var(--line2); white-space:nowrap; text-align:left}
+.labx-table{width:auto; border-collapse:collapse; font-size:var(--fs-2); font-variant-numeric:tabular-nums}
+/* 2026-11-23 用户反馈：列名和数据不对齐，列间距也别撑满整个弹窗。
+   表头和数据同向对齐，表格按内容宽度收窄，不再用 width:100% 把列拉散。 */
+.labx-table th,.labx-table td{padding:6px 5px; border-bottom:1px solid var(--line2); white-space:nowrap; text-align:left}
 .labx-table thead th{text-align:left}
 .labx-table th{position:sticky; top:0; z-index:1; background:var(--panel2); color:var(--ink2); font-weight:650; font-size:var(--fs-2)}
 .labx-table td{color:var(--ink2)}
