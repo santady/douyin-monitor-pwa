@@ -3365,6 +3365,529 @@ input{border:1px solid var(--line);border-radius:10px;background:var(--panel);co
 #detail .card{margin-top:8px;padding:10px 12px}
 #detail .card h3{margin-bottom:6px}
 #detail .card .sub{margin:-3px 0 6px}
+
+/* ============================================================================
+   UI 重构 · 2026-11
+   目标：先读信息、后看装饰。统一字号/行高/间距与表面层级；首页改为
+   「榜单主区 + 状态侧栏」，桌面双栏、移动单栏；列表合并为一张连续面板，
+   去掉 87 张独立小卡片造成的边框噪音。所有 id / data-* / 事件入口保持不变。
+   ========================================================================== */
+:root{
+  --bg:#f4f7fb;
+  --panel:#ffffff;
+  --panel2:#f8fafd;
+  --panel3:#eef3f9;
+  --ink:#101c2f;
+  --ink2:#3d4c63;
+  --mute:#64748b;
+  --faint:#8a99ad;
+  --line:#d9e3ef;
+  --line2:#eaf0f7;
+  --chip:#f1f5fa;
+  --accent:#2563eb;
+  --accent-soft:#edf3ff;
+  --accent-2:#087f8c;
+  --cmp:#c4511f;
+  --up:#c62828;
+  --down:#087443;
+  --gold:#966400;
+  --fs-0:10px; --fs-1:11px; --fs-2:12px; --fs-3:13px; --fs-4:14px;
+  --fs-5:17px; --fs-6:22px; --fs-7:30px;
+  --r-xs:6px; --r-sm:8px; --r-md:10px; --r-lg:14px; --r-xl:18px;
+  --sh-1:0 1px 2px rgba(16,28,47,.04);
+  --sh-2:0 6px 22px rgba(16,28,47,.07);
+  --sh-3:0 22px 56px rgba(16,28,47,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0b1220; --panel:#111a2b; --panel2:#162135; --panel3:#1a2740;
+    --ink:#f1f5f9; --ink2:#cbd5e1; --mute:#94a3b8; --faint:#718096;
+    --line:#26364d; --line2:#1d2b3f; --chip:#1a2740;
+    --accent:#7aa2ff; --accent-soft:#1b2b4d; --accent-2:#4fd1c5;
+    --cmp:#ff9a5c; --up:#ff7b72; --down:#4ade80; --gold:#fbbf24;
+    --sh-1:0 1px 2px rgba(0,0,0,.28);
+    --sh-2:0 8px 26px rgba(0,0,0,.32);
+    --sh-3:0 24px 64px rgba(0,0,0,.5);
+  }
+}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+       "Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+button,input,select,textarea{font:inherit}
+button{border:0;background:none;padding:0;cursor:pointer;color:inherit}
+input,select,textarea{color:var(--ink);border:1px solid var(--line);background:var(--panel);border-radius:10px}
+:where(button,input,select,summary,a):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+::selection{background:var(--accent-soft);color:var(--ink)}
+.num,.row .vv b,.row .vv s,.trend-stat .val{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ---------- 顶栏：移动两行，桌面一行 ---------- */
+.bar{
+  display:grid; grid-template-columns:minmax(0,1fr) auto;
+  grid-template-areas:"ttl actions" "tabs tabs";
+  align-items:center; gap:8px 10px;
+  padding:calc(env(safe-area-inset-top) + 10px) 14px 10px;
+  background:color-mix(in srgb,var(--panel) 92%,transparent);
+  -webkit-backdrop-filter:saturate(1.5) blur(16px); backdrop-filter:saturate(1.5) blur(16px);
+  border-bottom:1px solid var(--line); z-index:10;
+}
+.bar .ttl{grid-area:ttl;min-width:0}
+.bar .t1{font-size:18px;line-height:1.15;font-weight:760;letter-spacing:-.03em;color:var(--ink)}
+.bar .t2{font-size:11.5px;line-height:1.4;color:var(--mute);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .t2.warn{color:var(--gold)}
+.bar-actions{grid-area:actions;display:flex;align-items:center;gap:5px;flex:none}
+.ibtn{width:36px;height:36px;flex:none;border-radius:10px;display:grid;place-items:center;
+  color:var(--ink2);background:var(--panel2);border:1px solid var(--line);transition:background .16s,border-color .16s,transform .16s}
+.ibtn:hover{background:var(--panel);border-color:var(--accent)}
+.ibtn:active{transform:scale(.95)}
+.ibtn svg{width:17px;height:17px;display:block}
+.ibtn.spin svg{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ptabs{
+  grid-area:tabs;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;
+  width:100%;padding:3px;background:var(--panel2);border:1px solid var(--line);border-radius:11px;
+}
+.ptab{height:34px;padding:0 12px;border-radius:8px;text-align:center;font-size:12.5px;font-weight:650;
+  color:var(--ink2);background:transparent;transition:background .16s,color .16s,box-shadow .16s}
+.ptab:hover{color:var(--ink)}
+.ptab.on.dy{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.22)}
+.ptab.on.xhs{background:#c93f75;color:#fff;box-shadow:0 2px 8px rgba(201,63,117,.2)}
+
+/* ---------- 首页布局 ---------- */
+#home{
+  width:100%;max-width:1280px;margin:0 auto;
+  padding:10px 12px calc(env(safe-area-inset-bottom) + 30px);
+  display:block;
+}
+.home-side{display:flex;flex-direction:column;gap:8px;min-width:0;margin:0 0 10px}
+.home-main{min-width:0}
+.side-block{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:9px;min-width:0}
+.section-head{display:none;align-items:baseline;justify-content:space-between;gap:10px;margin:0 2px 10px}
+.section-head span{font-size:12px;font-weight:700;color:var(--ink2);letter-spacing:.01em}
+.section-head small{font-size:10.5px;color:var(--mute)}
+
+/* 快捷操作：移动是一行四格，桌面是侧栏 2×2 */
+.acts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.act{
+  display:flex;flex-direction:row;align-items:center;justify-content:center;gap:4px;
+  min-width:0;height:46px;padding:0 4px;border-radius:10px;border:1px solid var(--line);
+  background:var(--panel2);color:var(--ink2);box-shadow:none;
+  font-size:11px;font-weight:650;line-height:1.2;white-space:nowrap;overflow:hidden;
+  transition:background .16s,border-color .16s,transform .16s;
+}
+.act:hover{background:var(--panel);border-color:var(--accent);color:var(--ink)}
+.act:active{transform:scale(.97)}
+.act svg{width:16px;height:16px;flex:none;color:var(--accent)}
+.act.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(37,99,235,.22)}
+.act.primary svg{color:#fff}
+.act.primary:hover{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+.act span{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.act.dis{opacity:.45;pointer-events:none}
+
+/* 数据状态：移动紧凑胶囊，桌面 2×2 指标 */
+.statusrow{display:block}
+#health{
+  margin:0;padding:0;background:transparent;border:0;border-radius:0;
+  font-size:12px;line-height:1.45;overflow:visible;overflow-wrap:anywhere;
+}
+#health .dashboard-health-summary{
+  display:flex;flex-wrap:wrap;align-items:center;gap:4px 5px;
+  overflow:visible;padding:0;
+}
+#health .dashboard-health-summary>b{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--ink);margin:0 2px 0 0}
+#health .dashboard-health-summary .hh-kpi:first-of-type{display:none}
+#health .hh-kpi{
+  display:inline-flex;align-items:baseline;gap:3px;padding:2px 6px;border-radius:999px;
+  background:var(--panel2);border:1px solid var(--line2);min-width:0;
+}
+#health .hh-kpi>em{order:1;font-size:12.5px;line-height:1.2;font-weight:700;color:var(--ink)}
+#health .hh-kpi>i{order:2;font-size:10px;color:var(--mute)}
+#health .hh-kpi.ok>em{color:var(--down)}
+#health .hh-kpi.warn{border-color:rgba(198,40,40,.24);background:rgba(198,40,40,.06)}
+#health .hh-kpi.warn>em{color:var(--up)}
+#health details{margin-top:5px;padding-top:5px;border-top:1px solid var(--line2)}
+#health details summary{font-size:10.5px;line-height:1.4;color:var(--ink2);cursor:pointer}
+#health details ul{font-size:11.5px;line-height:1.55;margin:5px 0 0;padding-left:16px;max-height:140px;overflow:auto}
+#health .dashboard-error{font-size:11px;line-height:1.45;color:var(--up);margin-top:5px}
+.lab-btn{
+  width:100%;height:auto;min-height:38px;margin-top:7px;padding:5px 10px;
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;
+  border-radius:9px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+}
+#btnLab{width:100%;min-height:38px;height:auto;padding:5px 10px;font-size:12.5px;font-weight:650;color:var(--ink)}
+.lab-btn:hover{border-color:var(--accent);background:var(--panel)}
+.lab-btn span{font-size:12.5px;font-weight:650;line-height:1.2}
+.lab-btn small{font-size:10px;font-weight:500;color:var(--mute);line-height:1.25}
+
+/* ---------- 筛选与榜单 ---------- */
+.tools{
+  position:sticky;top:0;z-index:5;
+  margin:0 0 9px;padding:9px 10px 8px;
+  background:color-mix(in srgb,var(--panel) 96%,transparent);
+  border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-1);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+}
+.search{display:flex;gap:8px}
+.search input{
+  flex:1;min-width:0;height:42px;padding:0 12px;font-size:14px;font-weight:500;
+  border-radius:10px;border:1px solid var(--line);background:var(--panel2);outline:none;
+  transition:background .16s,border-color .16s,box-shadow .16s;
+}
+.search input::placeholder{color:var(--faint);font-weight:450}
+.search input:focus{background:var(--panel);border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+#cats{display:flex;gap:7px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+#cats::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;min-height:32px;padding:0 11px;border-radius:999px;background:var(--panel2);
+  border:1px solid var(--line);font-size:12px;font-weight:550;color:var(--ink2);
+  white-space:nowrap;transition:background .16s,border-color .16s,color .16s;
+}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650;box-shadow:0 2px 7px rgba(37,99,235,.18)}
+.seg2{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;margin-top:7px;padding:3px;
+  border:1px solid var(--line);border-radius:10px;background:var(--panel2);overflow:hidden;
+}
+.seg2 button{min-height:36px;padding:0 4px;border-radius:7px;font-size:12px;font-weight:550;color:var(--ink2);background:transparent;white-space:nowrap;transition:background .16s,color .16s}
+.seg2 button:hover{color:var(--ink)}
+.seg2 button.on{background:var(--panel);color:var(--accent);font-weight:700;box-shadow:var(--sh-1)}
+.list-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:1px 3px 7px}
+.list-head .eyebrow{display:block;font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--mute);line-height:1.2}
+.list-head h2{margin:2px 0 0;font-size:20px;line-height:1.15;font-weight:750;letter-spacing:-.025em;color:var(--ink)}
+.list-meta{display:flex;align-items:baseline;gap:6px;font-size:11px;color:var(--mute);white-space:nowrap}
+.list-meta b{font-size:14px;font-weight:750;color:var(--ink);font-variant-numeric:tabular-nums}
+.list-meta span{color:var(--mute)}
+.rows{
+  padding:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  overflow:hidden;box-shadow:var(--sh-1);
+}
+.row{
+  display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;
+  gap:0 12px;min-height:72px;margin:0;padding:12px 15px;
+  background:transparent;border:0;border-bottom:1px solid var(--line2);border-radius:0;
+  cursor:pointer;position:relative;transition:background .14s;
+}
+.row:last-child{border-bottom:0}
+.row:hover{background:var(--panel2)}
+.row:active{background:var(--accent-soft)}
+.row .rk{
+  grid-column:1;grid-row:1/3;align-self:center;display:grid;place-items:center;
+  width:28px;height:28px;border-radius:8px;background:var(--panel2);
+  color:var(--mute);font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;
+  border:0;margin:0;
+}
+.row[data-rank="1"] .rk{background:var(--accent-soft);color:var(--accent)}
+.row[data-rank="2"] .rk{background:#f1f5f9;color:#475569}
+.row[data-rank="3"] .rk{background:#fff7ed;color:#9a5b13}
+@media (prefers-color-scheme: dark){
+  .row[data-rank="2"] .rk{background:#1e293b;color:#cbd5e1}
+  .row[data-rank="3"] .rk{background:#2a1f14;color:#fbbf24}
+}
+.row .nm{
+  grid-column:2;grid-row:1;min-width:0;font-size:16px;line-height:1.3;
+  font-weight:650;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.row .ct{
+  grid-column:2;grid-row:2;min-width:0;margin-top:3px;font-size:11.5px;line-height:1.35;
+  color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.row .vv{
+  grid-column:3;grid-row:1/3;display:flex;flex-direction:column;align-items:flex-end;
+  justify-content:center;gap:2px;min-width:104px;
+}
+.row .vv-k{font-style:normal;font-size:9.5px;line-height:1.2;letter-spacing:.04em;color:var(--faint)}
+.row .vv b{font-size:17px;line-height:1.2;font-weight:750;color:var(--ink);white-space:nowrap}
+.row .vv s{
+  display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:nowrap;
+  text-decoration:none;font-size:12px;line-height:1.3;font-weight:600;white-space:nowrap;
+}
+.row .vv s .vv-period{font-style:normal;font-size:9.5px;font-weight:650;color:var(--mute);background:var(--panel2);border-radius:4px;padding:1px 4px;line-height:1.45}
+.row .vv s .qoq{font-style:normal;font-size:11px;font-weight:650;margin-left:1px}
+.row .vv s .qoq-tag{font-style:normal;font-size:9.5px;font-weight:500;color:var(--mute);margin-left:2px}
+.row .row-issues{grid-column:1/-1;margin-top:5px;padding-top:5px;border-top:1px dashed var(--line2);color:var(--ink2);font-size:11px;line-height:1.45}
+.empty{padding:44px 24px;text-align:center;color:var(--mute);font-size:14px;line-height:1.8}
+.offline{padding:8px 16px;background:var(--gold);color:#fff;font-size:13px;text-align:center}
+
+/* ---------- 详情页 ---------- */
+#detail{background:var(--bg)}
+.dhead{
+  display:grid;grid-template-columns:40px minmax(0,1fr) 40px;align-items:center;gap:12px;
+  padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;
+  border-bottom:1px solid var(--line);
+  background:color-mix(in srgb,var(--panel) 92%,transparent);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+}
+.dhead .ttl{min-width:0;flex:1}
+.d-kicker{font-size:9.5px;font-weight:700;letter-spacing:.1em;color:var(--accent);line-height:1.2;margin-bottom:2px}
+.dhead .nm{font-size:20px;line-height:1.2;font-weight:760;letter-spacing:-.025em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dhead .ct{font-size:11.5px;line-height:1.45;color:var(--mute);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#dView{padding:14px 12px calc(env(safe-area-inset-bottom) + 30px)}
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  margin:0 0 14px;padding:14px;box-shadow:var(--sh-1);position:relative;
+}
+.card h3{margin:0 0 7px;font-size:17px;line-height:1.3;font-weight:750;color:var(--ink);letter-spacing:-.015em}
+.card .sub{font-size:11.5px;line-height:1.55;color:var(--mute);margin:-2px 0 10px}
+.field-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 0 8px}
+.field-head span{font-size:12px;font-weight:700;color:var(--ink2)}
+.field-head small{font-size:10.5px;color:var(--mute)}
+.trend-picker{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:0 0 12px}
+.trend-chips{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.trend-chip{
+  display:inline-flex;align-items:center;gap:6px;min-height:36px;max-width:100%;
+  padding:0 10px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+  font-size:12.5px;font-weight:650;color:var(--ink);line-height:1.2;
+}
+.trend-chip i{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}
+.trend-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+.trend-chip button{border:0;background:transparent;color:var(--faint);font-size:17px;line-height:1;padding:0 0 0 2px;cursor:pointer;min-width:26px;min-height:26px}
+.trend-add{min-height:36px;padding:0 11px;border:1px dashed var(--line);border-radius:9px;background:transparent;color:var(--mute);font:650 12px/1.2 var(--sans);cursor:pointer}
+.trend-add:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.trend-menu{position:absolute;z-index:32;top:calc(100% + 6px);left:0;width:min(280px,calc(100vw - 40px));
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh-3);padding:8px;display:none}
+.trend-menu.on{display:block}
+.trend-menu input{width:100%;box-sizing:border-box;height:38px;padding:0 10px;border:1px solid var(--line);border-radius:8px;font:500 15px/1.3 var(--sans);color:var(--ink);background:var(--panel2);outline:none}
+.trend-options{max-height:210px;overflow:auto;margin-top:5px}
+.trend-opt{display:flex;align-items:center;gap:8px;width:100%;min-height:42px;border:0;background:transparent;text-align:left;padding:7px 8px;border-radius:7px;color:var(--ink2);font-size:13px;cursor:pointer}
+.trend-opt:hover{background:var(--panel2);color:var(--ink)}
+.trend-opt i{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}
+.trend-range-wrap{display:flex;flex-direction:column;gap:8px;margin:0 0 14px}
+.trend-quick{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.trend-quick button{min-height:37px;padding:0 10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink2);border-radius:8px;font:650 12px/1.2 var(--sans);cursor:pointer;white-space:nowrap}
+.trend-quick button:hover{border-color:var(--accent);color:var(--accent)}
+.trend-quick button.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 7px rgba(37,99,235,.18)}
+.trend-rangebar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-height:46px;padding:7px 11px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--ink2);font-size:12px}
+.trend-rangebar .trend-range-label{font-weight:700;color:var(--mute)}
+.trend-rangebar input[type="date"]{border:0;background:transparent;color:var(--ink);font:650 12px/1.3 var(--sans);padding:3px 0;min-width:108px;outline:none;font-variant-numeric:tabular-nums}
+.trend-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:2px}
+.trend-head h3{margin:0}
+.trend-stats{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:10px 0 3px}
+.trend-stat{flex:1 1 135px;max-width:100%;min-width:0;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 11px}
+.trend-stat .name{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:650;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trend-stat .name i{width:7px;height:7px;border-radius:50%;display:inline-block;flex:none}
+.trend-stat .val{font:750 22px/1.2 var(--sans);letter-spacing:-.025em;color:var(--ink);margin-top:3px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.trend-stat .val small{font-size:10.5px;font-weight:500;color:var(--mute);margin-left:2px}
+#chart{width:100%;height:280px;display:block;touch-action:pan-y;cursor:crosshair}
+.ch-lg{display:none;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:11.5px;color:var(--ink2)}
+.ch-lg.on{display:flex}
+.ch-lg span{display:inline-flex;align-items:center;gap:6px}
+.ch-lg i{width:14px;height:0;border-top:2px dashed currentColor;display:inline-block}
+.ch-lg i.solid{border-top-style:solid}
+.ch-lg i.bar{width:9px;height:9px;border:0;border-radius:2px;background:currentColor}
+.ch-lg i.bar.dim{opacity:.34}
+.chart-more{margin:10px 0 0;padding:10px 0 0;border:0;border-top:1px solid var(--line2)}
+.chart-more summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:7px;padding:2px 0 6px;font-size:12px;font-weight:650;color:var(--ink2)}
+.chart-more summary::-webkit-details-marker{display:none}
+.chart-more summary::before{content:"▸";font-size:11px;color:var(--mute)}
+.chart-more[open] summary::before{content:"▾"}
+.chart-more summary i{font-style:normal;color:var(--faint);font-size:10.5px;font-weight:500}
+.chart-more .ctr-1{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:0 0 7px}
+.chart-more .ctr-1 button{min-height:38px;padding:0;border-radius:9px;font-size:12px;background:var(--panel2);color:var(--ink2);border:1px solid var(--line)}
+.chart-more .ctr-1 button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:650}
+.chart-more .ctr-1 button:disabled{opacity:.38;cursor:not-allowed;background:var(--panel2);color:var(--mute)}
+.ctr-sel{display:flex;align-items:center;gap:8px;margin:0 0 7px;font-size:11.5px;color:var(--mute)}
+.ctr-sel select{flex:1;height:38px;border:1px solid var(--line);border-radius:9px;background:var(--panel2);color:var(--ink2);font:inherit;font-size:12px;padding:0 9px;outline:none}
+.ctr-sel select:focus{border-color:var(--accent)}
+.ctr-sel select:disabled{opacity:.38;cursor:not-allowed}
+#cmpRow{grid-template-columns:repeat(3,minmax(0,1fr))}
+#cmpRow button{min-height:38px;font-size:11.5px;white-space:nowrap}
+.hint{font-size:11.5px;line-height:1.6;color:var(--mute);margin-top:8px}
+.card .hr-cnt{float:right;font-size:10.5px;font-weight:650;color:var(--mute);font-variant-numeric:tabular-nums;line-height:24px}
+.hr-wrap{max-height:58dvh;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin:9px -14px -14px;border-top:1px solid var(--line2)}
+.hr-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.hr-tbl th{position:sticky;top:0;z-index:1;background:var(--panel2);padding:9px 12px;text-align:center;font-size:10.5px;font-weight:700;color:var(--mute);white-space:nowrap}
+.hr-tbl td{padding:10px 12px;text-align:right;border-top:1px solid var(--line2);white-space:nowrap}
+.hr-tbl td:first-child{text-align:left}
+.hr-tbl td.t b{font-weight:650}
+.hr-tbl td.t i{font-style:normal;color:var(--faint);font-size:10px;margin-left:6px}
+.hr-tbl tr.day td{background:var(--panel2);color:var(--mute);text-align:left;font-size:10.5px;font-weight:700;padding:5px 12px}
+.hr-tbl td:last-child{color:var(--ink2)}
+
+/* 明细数据完整值较长，窄屏表格横向会被截断。手机与桌面侧栏统一为
+   「时间 + 逐行指标」的卡片式明细，保留完整数值与增量，不再出现横向切字。 */
+#hrCard .hr-wrap{margin:10px -4px 0;border-top:1px solid var(--line2)}
+#hrCard .hr-tbl{display:block;width:100%;border-collapse:separate;border-spacing:0}
+#hrCard .hr-tbl thead{display:none}
+#hrCard .hr-tbl tbody{display:block}
+#hrCard .hr-tbl tr{display:grid;grid-template-columns:48px minmax(0,1fr);column-gap:8px;
+  padding:9px 4px;border-top:1px solid var(--line2)}
+#hrCard .hr-tbl tr.day{display:block;padding:5px 4px;background:var(--panel2);border-top:0}
+#hrCard .hr-tbl tr.day td{padding:0;border:0;background:transparent;color:var(--mute);
+  font-size:10px;font-weight:700}
+#hrCard .hr-tbl td{padding:0;border:0;text-align:left;white-space:normal;
+  font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+#hrCard .hr-tbl td.t{grid-column:1;grid-row:1/span 4;align-self:start}
+#hrCard .hr-tbl td.t b{display:block;font-size:13px;font-weight:650;color:var(--ink2)}
+#hrCard .hr-tbl td.t i{display:block;margin:2px 0 0;font-size:10px;color:var(--mute)}
+#hrCard .hr-tbl td[data-label]{display:block;grid-column:2}
+#hrCard .hr-tbl td[data-label]::before{content:attr(data-label);display:inline-block;
+  min-width:40px;margin-right:5px;color:var(--mute);font-size:10.5px;font-weight:550}
+#hrCard .hr-tbl td[data-label]:nth-of-type(2){grid-row:1;color:var(--ink);font-weight:650}
+#hrCard .hr-tbl td[data-label]:nth-of-type(3){grid-row:2;color:var(--ink2)}
+#hrCard .hr-tbl td[data-label]:nth-of-type(4){grid-row:3;color:var(--ink2)}
+
+/* ---------- 弹层 / 表单 ---------- */
+#mask{position:fixed;inset:0;z-index:40;background:rgba(12,22,38,.48);display:none}
+#mask.on{display:block}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--panel);
+  border-radius:20px 20px 0 0;max-height:90dvh;display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .26s cubic-bezier(.32,.72,.35,1);
+  padding-bottom:env(safe-area-inset-bottom);box-shadow:var(--sh-3);
+}
+.sheet.on{transform:none}
+.sh-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:16px 18px 12px;border-bottom:1px solid var(--line2)}
+.sh-head h3{margin:0;font-size:19px;line-height:1.3;font-weight:750;letter-spacing:-.02em;color:var(--ink)}
+.sh-head button{width:38px;height:38px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);color:var(--ink2);font-size:22px;line-height:1;position:relative}
+.sh-head button::after{content:'';position:absolute;inset:-5px}
+.sh-body{overflow-y:auto;padding:16px 18px 24px;font-size:14px;line-height:1.6}
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:12px;line-height:1.4;color:var(--ink2);margin-bottom:6px;font-weight:600}
+.fld input,.fld select,.fld textarea{width:100%;min-height:44px;padding:9px 12px;font-size:14px;background:var(--panel2);border-radius:10px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{background:var(--panel);border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);outline:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:0 16px;border-radius:10px;font-size:14px;font-weight:650;background:var(--panel2);color:var(--ink2);border:1px solid var(--line);transition:background .16s,border-color .16s,transform .16s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.18)}
+.btn.primary:hover{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.mrow{display:flex;gap:10px;margin-bottom:12px}
+.mrow input{flex:1}
+.rep h2{font-size:20px;line-height:1.35;font-weight:750;color:var(--ink);margin:14px 0 8px;letter-spacing:-.02em}
+.rep h3{font-size:16px;line-height:1.4;font-weight:700;color:var(--ink);margin:12px 0 6px}
+.rep p{margin:6px 0;line-height:1.7}
+.rep .rli{position:relative;padding-left:14px;margin:4px 0;line-height:1.7}
+.rep table{width:100%;border-collapse:collapse;margin:8px 0 12px;font-size:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:block;overflow-x:auto}
+.rep th{background:var(--panel2);text-align:left;padding:8px 9px;font-weight:650;color:var(--mute);font-size:10.5px;border-bottom:1px solid var(--line);white-space:nowrap}
+.rep td{padding:7px 9px;border-bottom:1px solid var(--line2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.dbgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin-bottom:12px}
+.dbimg{border:2px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;background:var(--panel2)}
+.dbimg img{width:100%;height:78px;object-fit:cover;display:block;background:var(--panel2)}
+.dbimg span{display:block;font-size:10.5px;padding:4px 7px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dbimg.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.dbimg.off{opacity:.4;cursor:not-allowed}
+.dbg{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-size:13px;margin:0 8px 8px 0;cursor:pointer;background:var(--panel2)}
+.dbg input{margin:0;accent-color:var(--accent)}
+.dbg em{font-style:normal;color:var(--mute);font-size:10.5px}
+.dbg i{font-style:normal;color:var(--gold);font-size:10.5px}
+.joblog{background:var(--panel2);border-radius:10px;padding:10px;font-size:11.5px;line-height:1.7;white-space:pre-wrap;word-break:break-all;max-height:220px;overflow:auto;color:var(--ink2)}
+.ok{color:var(--down)} .bad{color:var(--up)} .warn{color:var(--gold)}
+.tbl24{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tbl24 th{background:var(--panel2);text-align:right;padding:8px;color:var(--mute);font-size:10.5px;border-bottom:1px solid var(--line)}
+.tbl24 th:first-child{text-align:left}
+.tbl24 td{padding:8px;text-align:right;border-bottom:1px solid var(--line2);font-variant-numeric:tabular-nums}
+.tbl24 td:first-child{text-align:left;color:var(--ink);font-weight:600}
+.tbl24 tbody tr:last-child td{border-bottom:0}
+.arow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+.arow .nm{min-width:0;font-size:13px;font-weight:650;color:var(--ink)}
+.arow .nm em{display:block;font-style:normal;font-size:10.5px;color:var(--mute);margin-top:2px;font-weight:400}
+.arow .vv{flex:none;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* 新增话题弹窗沿用同一套表面/表单尺度 */
+.topic-add-mask{padding:16px;background:rgba(12,22,38,.48);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.topic-add-modal{border-radius:18px;border-color:var(--line);box-shadow:var(--sh-3)}
+.topic-add-head{padding:18px 20px 14px}
+.topic-add-kicker{font-size:9.5px;letter-spacing:.12em;color:var(--accent)}
+.topic-add-head h2{font:750 21px/1.3 var(--sans);letter-spacing:-.025em}
+.topic-add-x{width:36px;height:36px;border-radius:9px}
+.topic-add-body{padding:16px 20px 6px}
+.topic-add-sub{font-size:12.5px;line-height:1.6}
+.topic-add-search input{height:44px;font-size:14px;border-radius:10px}
+.topic-add-status{font-size:12px;line-height:1.55}
+.topic-add-row{min-height:48px;padding:9px 11px;border-radius:10px;background:var(--panel2)}
+.topic-add-field input{height:44px;font-size:14px;border-radius:10px}
+
+/* ---------- 桌面 ---------- */
+@media (min-width:980px){
+  .bar{
+    grid-template-columns:minmax(0,1fr) auto auto;
+    grid-template-areas:"ttl tabs actions";
+    gap:16px;
+    padding:calc(env(safe-area-inset-top) + 14px) max(24px,calc((100vw - 1280px)/2)) 14px;
+  }
+  .bar .t1{font-size:22px}
+  .bar .t2{font-size:12.5px}
+  .ptabs{width:auto;min-width:220px;padding:4px}
+  .ptab{height:36px;padding:0 22px}
+  #home{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 304px;
+    grid-template-areas:"main side";
+    gap:24px;padding:24px 24px 42px;
+  }
+  .home-side{grid-area:side;position:sticky;top:24px;align-self:start;margin:0}
+  .home-main{grid-area:main}
+  .side-block{padding:15px}
+  .section-head{display:flex}
+  .acts{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .act{height:60px;flex-direction:row;justify-content:flex-start;gap:8px;padding:0 11px;font-size:12.5px}
+  .act svg{width:19px;height:19px;padding:9px;box-sizing:content-box;background:var(--accent-soft);border-radius:10px}
+  .act.primary svg{background:rgba(255,255,255,.16)}
+  .statusrow{display:block}
+  #health .dashboard-health-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  #health .dashboard-health-summary>b{grid-column:1/-1;font-size:13px;margin-bottom:2px}
+  #health .hh-kpi{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:62px;padding:9px 11px;border-radius:10px}
+  #health .hh-kpi>em{font-size:21px;line-height:1.05}
+  #health .hh-kpi>i{font-size:10.5px;line-height:1.2}
+  .lab-btn{min-height:48px}
+  .tools{top:16px;margin-bottom:14px;padding:13px 14px 11px;border-radius:16px}
+  .list-head{margin:2px 4px 12px}
+  .list-head h2{font-size:24px}
+  .rows{border-radius:18px}
+  .row{min-height:78px;padding:14px 18px;grid-template-columns:34px minmax(0,1fr) auto;gap:0 14px}
+  .row .rk{width:30px;height:30px}
+  .row .nm{font-size:17px}
+  .row .vv b{font-size:18px}
+  .row .vv s{font-size:12.5px}
+  .row .ct{font-size:12px}
+  .row:hover{background:var(--panel2)}
+  .row:hover::after{content:"";position:absolute;right:0;top:16px;bottom:16px;width:3px;background:var(--accent);border-radius:3px 0 0 3px}
+  .dhead{padding:calc(env(safe-area-inset-top) + 16px) max(24px,calc((100vw - 1280px)/2)) 16px}
+  .dhead .nm{font-size:26px}
+  #dView{
+    display:grid;grid-template-columns:minmax(0,1.35fr) minmax(340px,.65fr);
+    gap:20px;align-items:start;max-width:1280px;margin:0 auto;
+    padding:24px 24px 48px;
+  }
+  .card{margin:0;padding:18px}
+  #hrCard{position:sticky;top:16px}
+  #chart{height:360px}
+  .trend-quick button{min-height:38px;padding:0 12px}
+  .chart-more .ctr-1 button{min-height:40px}
+  #hrCard .hr-wrap{max-height:calc(100dvh - 210px)}
+  .card h3{font-size:18px}
+  .sh-body{font-size:14.5px}
+  .topic-add-modal{width:min(760px,100%)}
+  #mask{background:rgba(12,22,38,.52);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+  .sheet{
+    left:50%;right:auto;bottom:auto;top:50%;width:min(760px,calc(100vw - 64px));
+    max-height:min(88vh,900px);border-radius:20px;padding-bottom:0;
+    transform:translate(-50%,-47%) scale(.98);opacity:0;pointer-events:none;
+    transition:transform .24s cubic-bezier(.32,.72,.35,1),opacity .18s ease;
+  }
+  .sheet.on{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+}
+@media (max-width:370px){
+  .bar .t1{font-size:18px}
+  .bar-actions{gap:5px}
+  .ibtn{width:36px;height:36px}
+  .act{font-size:11px;gap:3px;padding:0 3px}
+  .act svg{width:15px;height:15px}
+  .row{grid-template-columns:26px minmax(0,1fr) auto;gap:0 10px;padding:11px 12px}
+  .row .rk{width:25px;height:25px}
+  .row .nm{font-size:15px}
+  .row .vv b{font-size:16px}
+  .row .vv{min-width:96px}
+  .list-head h2{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
 </style>
 </head>
 <body>
@@ -3375,56 +3898,80 @@ input{border:1px solid var(--line);border-radius:10px;background:var(--panel);co
     <div class="t2" id="sub">正在打开数据…</div>
   </div>
   <div class="ptabs" role="tablist" aria-label="平台">
-    <button class="ptab dy on" data-pf="dy">抖音</button>
-    <button class="ptab xhs" data-pf="xhs">小红书</button>
+    <button class="ptab dy on" data-pf="dy" role="tab" aria-selected="true">抖音</button>
+    <button class="ptab xhs" data-pf="xhs" role="tab" aria-selected="false">小红书</button>
   </div>
-  <button class="ibtn" id="btnAddTopic" title="新增话题（抖音 + 小红书）" aria-label="新增话题">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12h14"/></svg>
-  </button>
-  <button class="ibtn" id="btnRefresh" title="刷新">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
-  </button>
-  <button class="ibtn" id="btnGear" title="设置">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9v.1a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
-  </button>
+  <div class="bar-actions" role="group" aria-label="页面操作">
+    <button class="ibtn" id="btnAddTopic" title="新增话题（抖音 + 小红书）" aria-label="新增话题">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <button class="ibtn" id="btnRefresh" title="刷新" aria-label="刷新数据">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+    </button>
+    <button class="ibtn" id="btnGear" title="设置" aria-label="打开设置">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9v.1a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>
+    </button>
+  </div>
 </header>
 
 <main class="view" id="home">
-  <div class="acts" id="acts">
-    <button class="act primary" id="actCollect" title="立即采集一轮数据">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
-      <span>立即采集</span>
-    </button>
-    <button class="act" id="actReport" title="查看报表">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 3h11l5 5v13H4z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>
-      <span>看报表</span>
-    </button>
-    <button class="act" id="actDouban" title="发到豆瓣">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
-      <span>发豆瓣</span>
-    </button>
-    <button class="act" id="actAnom" title="异常分析">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17.5v.5"/></svg>
-      <span>异常分析</span>
-    </button>
-  </div>
-  <div class="statusrow">
-    <div id="health" class="health-box" role="status" aria-live="polite"></div>
-    <button class="btn" id="btnLab" title="话题数据详情 · 单话题 / 时间段">工作台</button>
-  </div>
-  <div class="tools">
-    <div class="search">
-      <input id="q" placeholder="搜索话题或 ID…" autocomplete="off">
+  <aside class="home-side">
+    <section class="side-block actions-block" aria-label="快捷操作">
+      <div class="section-head"><span>快捷操作</span><small>常用入口</small></div>
+      <div class="acts" id="acts">
+        <button class="act primary" id="actCollect" title="立即采集一轮数据">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
+          <span>立即采集</span>
+        </button>
+        <button class="act" id="actReport" title="查看报表">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 3h11l5 5v13H4z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>
+          <span>看报表</span>
+        </button>
+        <button class="act" id="actDouban" title="发到豆瓣">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+          <span>发豆瓣</span>
+        </button>
+        <button class="act" id="actAnom" title="异常分析">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17.5v.5"/></svg>
+          <span>异常分析</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="side-block status-block" aria-label="数据状态">
+      <div class="section-head"><span>数据状态</span><small>每小时更新</small></div>
+      <div class="statusrow">
+        <div id="health" class="health-box" role="status" aria-live="polite"></div>
+        <button class="btn lab-btn" id="btnLab" title="话题数据详情 · 单话题 / 时间段">
+          <span>数据工作台</span>
+          <small>单话题 · 时间段</small>
+        </button>
+      </div>
+    </section>
+  </aside>
+
+  <section class="home-main" aria-label="话题榜单">
+    <div class="tools">
+      <div class="search">
+        <input id="q" placeholder="搜索话题或 ID…" autocomplete="off" aria-label="搜索话题或 ID">
+      </div>
+      <div id="cats" aria-label="话题分类"></div>
+      <div class="seg2" id="dimbar" role="group" aria-label="榜单口径">
+        <button data-d="d1" class="on">24h 榜</button>
+        <button data-d="h1">1h 榜</button>
+        <button data-d="h1qoq">1h 环比</button>
+        <button data-d="qoq">环比</button>
+      </div>
     </div>
-    <div id="cats"></div>
-    <div class="seg2" id="dimbar">
-      <button data-d="d1" class="on">24h 榜</button>
-      <button data-d="h1">1h 榜</button>
-      <button data-d="h1qoq">1h 环比</button>
-      <button data-d="qoq">环比</button>
+    <div class="list-head">
+      <div>
+        <span class="eyebrow">RANKING</span>
+        <h2>话题榜</h2>
+      </div>
+      <div class="list-meta" id="listMeta" aria-live="polite"></div>
     </div>
-  </div>
-  <div class="rows" id="list"></div>
+    <div class="rows" id="list"></div>
+  </section>
 </main>
 
 <section id="detail">
@@ -3433,6 +3980,7 @@ input{border:1px solid var(--line);border-radius:10px;background:var(--panel);co
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
     <div class="ttl" style="min-width:0;flex:1">
+      <div class="d-kicker">话题详情</div>
       <div class="nm" id="dName">—</div>
       <div class="ct" id="dCt"></div>
     </div>
@@ -3442,17 +3990,19 @@ input{border:1px solid var(--line);border-radius:10px;background:var(--panel);co
   </div>
   <div class="view" id="dView">
     <div class="card trend-card">
+      <div class="field-head"><span>对比话题</span><small>可选 · 最多一个</small></div>
       <div class="trend-picker">
         <div class="trend-chips" id="trendChips"></div>
         <div class="trend-add-wrap">
           <button type="button" class="trend-add" id="trendAddBtn"
                   aria-expanded="false" aria-controls="trendMenu">＋ 添加对比话题</button>
           <div class="trend-menu" id="trendMenu">
-            <input id="trendSearch" type="search" placeholder="搜索话题名" autocomplete="off">
+            <input id="trendSearch" type="search" placeholder="搜索话题名" autocomplete="off" aria-label="搜索对比话题">
             <div class="trend-options" id="trendOptions"></div>
           </div>
         </div>
       </div>
+      <div class="field-head"><span>时间范围</span><small>快捷档位 / 自定义区间</small></div>
       <div class="trend-range-wrap">
         <div class="trend-quick" id="trendQuick" role="group" aria-label="快捷时间范围">
           <button type="button" data-days="0.25">近 6 小时</button>
@@ -4003,15 +4553,22 @@ function renderList(){
   // 2026-11-13：列表行不再画迷你趋势带；曲线只在详情页看，列表专注排名与数值。
   const h1SpanNote = r => (h1Rank && r.hspan && Math.abs(r.hspan - 1) > 0.35)
     ? ' · 跨度 ' + r.hspan.toFixed(1) + ' 小时' : '';
+  const dimName = S.dim === 'h1' ? '1 小时榜'
+    : S.dim === 'h1qoq' ? '1 小时环比'
+    : S.dim === 'qoq' ? '24 小时环比' : '24 小时榜';
+  const meta = $('#listMeta');
+  if (meta) meta.innerHTML = '<b>' + rows.length + '</b><span>' + dimName + '</span>';
+  const totalLabel = S.pf === 'xhs' ? '总浏览' : '总播放';
   box.innerHTML = rows.length ? rows.map((r, i) => {
     const v = h1Rank ? r.h1 : r.d1;
     const issues = dashboardRowIssues(r, S.pf);
-    return '<div class="row" data-ch="' + stEsc(r.ch_id) + '">' +
+    return '<div class="row" data-ch="' + stEsc(r.ch_id) + '" data-rank="' + (i + 1) + '">' +
       '<div class="rk">' + (i + 1) + '</div>' +
       '<div class="nm">' + stEsc(r.name) + '</div>' +
-      '<div class="ct">' + h1SpanNote(r) + '</div>' +
-      '<div class="vv"><b>' + fmtYi(r.value) + '</b>' +
-        '<s class="' + dcls(v) + '">' + (v == null ? '—' : fmtWanDelta(v))
+      '<div class="ct">' + stEsc(r.cats.join(' · ')) + h1SpanNote(r) + '</div>' +
+      '<div class="vv"><i class="vv-k">' + totalLabel + '</i><b>' + fmtYi(r.value) + '</b>' +
+        '<s class="' + dcls(v) + '"><i class="vv-period">' + (h1Rank ? '1h' : '24h') + '</i>'
+        + (v == null ? '—' : fmtWanDelta(v))
         /* 1h环比只在 1h 榜 / 1h环比榜显示；24h 榜与 24h环比榜不再重复这一行 */
         + (h1Rank ? '<i class="qoq-tag">1h环比</i>' + fmtH1Qoq(r) : fmtQoq(r)) + '</s>' +
         '</div>' +
@@ -4334,6 +4891,8 @@ function renderHourly(){
   items.reverse();                       // 最新在上
   let prevDay = '';
   const ncol = isX ? 4 : 3;
+  const labelVal = isX ? '浏览量' : '播放量';
+  const labelPart = isX ? '笔记数' : '参与人数';
   const trs = items.map(({ s, p }) => {
     const gap = p ? (s[0] - p[0]) / 3600 : null;
     const dt = new Date(s[0] * 1000);
@@ -4355,15 +4914,15 @@ function renderHourly(){
       + '<td class="t"><b>' + tsLabel(s[0]) + '</b><i'
       + (cut ? ' class="cut" title="距上一条 ' + gap.toFixed(1) + ' 小时，中途断档"' : '') + '>'
       + (gap == null ? '首条' : '+' + gap.toFixed(1) + 'h') + '</i></td>'
-      + '<td>' + num(s[1]) + inc(s[1], p ? p[1] : null) + '</td>'
-      + '<td>' + (s.length > 2 && s[2] != null
+      + '<td data-label="' + labelVal + '">' + num(s[1]) + inc(s[1], p ? p[1] : null) + '</td>'
+      + '<td data-label="' + labelPart + '">' + (s.length > 2 && s[2] != null
             ? num(s[2]) + inc(s[2], p && p.length > 2 ? p[2] : null) : '—') + '</td>'
-      + (isX ? '<td>' + (dv != null ? num(dv) + inc(dv, pdv) : '—') + '</td>' : '')
+      + (isX ? '<td data-label="讨论数">' + (dv != null ? num(dv) + inc(dv, pdv) : '—') + '</td>' : '')
       + '</tr>';
   }).join('');
   box.innerHTML = '<table class="hr-tbl"><thead><tr><th>时间</th><th>'
-    + (isX ? '浏览量' : '播放量') + '</th><th>'
-    + (isX ? '笔记数' : '参与人数') + '</th>'
+    + labelVal + '</th><th>'
+    + labelPart + '</th>'
     + (isX ? '<th>讨论数</th>' : '') + '</tr></thead><tbody>' + trs + '</tbody></table>';
 }
 /* 要画的线，顺序即配色顺序（2026-11-10 用户定，和桌面监控台同一套口径）：
@@ -5949,7 +6508,10 @@ function toast(msg, bad){
 document.querySelectorAll('.ptab').forEach(b => b.onclick = () => {
   S.pf = b.dataset.pf;
   localStorage.setItem('m3pf', S.pf);
-  document.querySelectorAll('.ptab').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.ptab').forEach(x => {
+    x.classList.toggle('on', x === b);
+    x.setAttribute('aria-selected', x === b ? 'true' : 'false');
+  });
   $('#cats').innerHTML = '';
   restoreListPrefs();
   S.cmpTopic = '';
@@ -6118,7 +6680,11 @@ $('#btnDel').onclick = () => { if (S.sel) removeTopic(S.pf, S.sel); };
 /* ---------------- 启动 ---------------- */
 function boot(){
   restoreListPrefs();
-  document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('on', b.dataset.pf === S.pf));
+  document.querySelectorAll('.ptab').forEach(b => {
+    const on = b.dataset.pf === S.pf;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
   paintCache();
   if (navigator.onLine === false){
     S.errors.dy = S.errors.xhs = '当前离线，仅显示已有缓存';
