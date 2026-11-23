@@ -37,6 +37,88 @@ function esc(s){
   })[c]);
 }
 
+/* 趋势导出图：把画布装进一张有背景、有标题/日期/图例的完整图片。
+   背景必须显式填色，否则 canvas 透明，用户打开就是棋盘格；右侧轴标签也不会被裁。 */
+function trendExportCanvasCore(chart, opts){
+  opts = opts || {};
+  const W = opts.width || 1600;
+  const H = opts.height || 920;
+  const dpr = opts.dpr || 2;
+  const padX = opts.padX || 56;
+  const headerH = opts.headerH || 158;
+  const footerH = opts.footerH || 44;
+  const chartW = opts.chartW || (W - padX * 2);
+  const chartH = opts.chartH || (H - headerH - footerH);
+  const root = getComputedStyle(document.documentElement);
+  const css = k => (root.getPropertyValue(k) || '').trim();
+  const bg = opts.bg || css('--panel') || '#ffffff';
+  const ink = opts.ink || css('--ink') || '#17243a';
+  const mute = opts.mute || css('--mute') || '#8391a6';
+  const line = opts.line || css('--line') || '#e3eaf3';
+  const accent = opts.accent || css('--accent') || '#2f6feb';
+  const ff = (css('--sans') || 'sans-serif').replace(/\s+/g, ' ');
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  g.fillStyle = accent; g.fillRect(0, 0, W, 3);
+
+  const fit = (text, maxW) => {
+    let s = String(text == null ? '' : text);
+    if(g.measureText(s).width <= maxW) return s;
+    while(s.length > 1 && g.measureText(s + '…').width > maxW) s = s.slice(0, -1);
+    return s + '…';
+  };
+
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  g.fillStyle = accent; g.font = '600 12px ' + ff;
+  g.fillText(fit(opts.kicker || '', W - padX * 2), padX, 34);
+  g.fillStyle = ink; g.font = '700 30px ' + ff;
+  g.fillText(fit(opts.title || '趋势', W - padX * 2), padX, 68);
+  g.fillStyle = mute; g.font = '500 13px ' + ff;
+  g.fillText(fit(opts.subtitle || '', W - padX * 2), padX, 92);
+
+  g.strokeStyle = line; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(padX, 106); g.lineTo(W - padX, 106); g.stroke();
+
+  let lx = padX;
+  const ly = 132;
+  g.font = '500 12px ' + ff;
+  (opts.legend || []).forEach(item => {
+    if(!item || !item.name) return;
+    const name = item.name + (item.right ? ' · 右轴' : '');
+    const tw = Math.min(250, g.measureText(name).width);
+    if(lx + 20 + 6 + tw > W - padX) return;
+    g.strokeStyle = item.color || ink;
+    g.lineWidth = 2;
+    g.setLineDash(item.dash ? [5, 4] : []);
+    g.beginPath(); g.moveTo(lx, ly - 4); g.lineTo(lx + 20, ly - 4); g.stroke();
+    g.setLineDash([]);
+    if(!item.dash){
+      g.fillStyle = item.color || ink;
+      g.beginPath(); g.arc(lx + 10, ly - 4, 2.2, 0, Math.PI * 2); g.fill();
+    }
+    g.fillStyle = ink;
+    g.fillText(fit(name, 250), lx + 26, ly);
+    lx += 26 + tw + 26;
+  });
+
+  g.drawImage(chart, padX, headerH, chartW, chartH);
+
+  g.strokeStyle = line; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(padX, H - footerH + 8); g.lineTo(W - padX, H - footerH + 8); g.stroke();
+  g.fillStyle = mute; g.font = '500 11px ' + ff;
+  g.fillText(fit(opts.footer || '', W - padX * 2 - 140), padX, H - 18);
+  if(opts.stamp){
+    g.textAlign = 'right';
+    g.fillText(fit(opts.stamp, 240), W - padX, H - 18);
+    g.textAlign = 'left';
+  }
+  return cv;
+}
+
+
 function hexA(hex, a){
   const h = hex.replace('#','');
   const n = parseInt(h.length === 3 ? h.split('').map(c=>c+c).join('') : h, 16);
@@ -5073,12 +5155,13 @@ function barModeOf(mode, range, lines, shape){
     && L.some(s => s.kind !== 'yday');
 }
 
-function drawChart(){
+function drawChart(targetCv, targetW, targetH, targetDpr){
   const t = D().rows.find(r => r.ch_id === S.sel); if (!t) return;
-  const cv = $('#chart'), dpr = Math.min(2, window.devicePixelRatio || 1);
-  const W = cv.clientWidth || 320, H = cv.clientHeight || 210;
-  cv.width = W * dpr; cv.height = H * dpr;
-  const g = cv.getContext('2d');
+  const outCv = (targetCv && typeof targetCv.getContext === 'function') ? targetCv : $('#chart');
+  const dpr = targetDpr || Math.min(2, window.devicePixelRatio || 1);
+  const W = targetW || outCv.clientWidth || 320, H = targetH || outCv.clientHeight || 210;
+  outCv.width = W * dpr; outCv.height = H * dpr;
+  const g = outCv.getContext('2d');
   g.setTransform(dpr, 0, 0, dpr, 0, 0);   // 改过画布尺寸后 transform 会回到单位阵，每轮重设一次
   g.clearRect(0, 0, W, H);
   const css = getComputedStyle(document.body);
@@ -5608,14 +5691,32 @@ function chartPointer(e){
      没有原生桥（电脑浏览器直接开 App 页调试）退回 blob 下载。 */
   $('#btnChartPng').addEventListener('click', () => {
     if(!chartGeo){ toast('还没有可导出的图', true); return; }
+    const keepGeo = chartGeo;
+    const lg = chartList().map(s => ({
+      name: s.name,
+      color: s.kind === 'xhs' ? '#d64b86' : (s.ci ? '#d9663a' : '#2f6feb'),
+      dash: s.dash, right: s.kind === 'xhs',
+    }));
+    const expChart = document.createElement('canvas');
+    drawChart(expChart, 1488, 718, 2);
+    chartGeo = keepGeo;
+    const out = trendExportCanvasCore(expChart, {
+      kicker: (S.pf === 'xhs' ? '小红书' : '抖音') + ' · 趋势曲线',
+      title: (($('#dName') || {}).textContent || '趋势').trim(),
+      subtitle: tsLabel(keepGeo.tmin, true) + ' → ' + tsLabel(keepGeo.tmax, true) + ' · '
+        + (S.mode === 'inc' ? '增量' : '总量') + (S.shape === 'bar' ? ' · 柱状' : ' · 曲线'),
+      legend: lg,
+      footer: '数据截止 ' + tsLabel(keepGeo.tmax, true),
+      stamp: '导出于 ' + tsLabel(Date.now() / 1000, true),
+    });
     const name = '趋势_' + (($('#dName') || {}).textContent || '趋势')
-      .replace(/[\\/:*?"<>|]/g, '').trim() + '_' + trendDateInput(chartGeo.tmax) + '.png';
-    const b64 = cv.toDataURL('image/png').split(',')[1];
+      .replace(/[\\/:*?"<>|]/g, '').trim() + '_' + trendDateInput(keepGeo.tmax) + '.png';
+    const b64 = out.toDataURL('image/png').split(',')[1];
     if(window.Native && window.Native.exportPng){
       window.Native.exportPng(name, b64);
     }else{
       const a = document.createElement('a');
-      a.href = cv.toDataURL('image/png');
+      a.href = out.toDataURL('image/png');
       a.download = name;
       a.click();
     }
