@@ -87,7 +87,7 @@ function trendExportCanvasCore(chart, opts){
   g.font = '500 12px ' + ff;
   (opts.legend || []).forEach(item => {
     if(!item || !item.name) return;
-    const name = item.name + (item.right ? ' · 右轴' : '');
+    const name = item.name;
     const tw = Math.min(250, g.measureText(name).width);
     if(lx + 20 + 6 + tw > W - padX) return;
     g.strokeStyle = item.color || ink;
@@ -5068,7 +5068,10 @@ function chartList(){
     ? dailySeries(snaps, from, to, S.mode)
     : seriesWindow(snaps, from, to, S.mode, true);
   if (!main.length) return out;
-  out.push({name: t.name, pts: main, ci: 0, dash: false, kind: 'main'});
+  /* 叠加小红书时图例不用「右轴」：两条线直接用平台名区分。
+     没有叠加时仍显示话题名，图例保持原来的可读性。 */
+  const mainName = S.cmpXhs ? (S.pf === 'xhs' ? '小红书' : '抖音') : t.name;
+  out.push({name: mainName, pts: main, ci: 0, dash: false, kind: 'main'});
   if (S.cmpYday){
     /* 「昨天」= 把窗口整体往前挪一天取点，再把时间戳挪回来，叠在同一段横轴上。
        86400 是 3600 的整数倍，整点档不会错位；两条线形状一致才谈得上「今天比昨天猛不猛」。
@@ -5085,7 +5088,7 @@ function chartList(){
       v: p.v,
       at: p.at != null ? p.at + 86400 : undefined,
     }));
-    if (y.length) out.push({name: t.name + ' · 昨天', pts: y, ci: 0, dash: true, kind: 'yday'});
+    if (y.length) out.push({name: mainName + ' · 昨天', pts: y, ci: 0, dash: true, kind: 'yday'});
   }
   /* 对比话题：只保留 chips 里那一个入口，图表仍要画异色虚线；
      这里和主线共用 from/to，自定义日期也同步裁剪。 */
@@ -5119,7 +5122,7 @@ function chartList(){
         const cp = cs.length ? (longRange
           ? dailySeries(cs, from, to, S.mode)
           : seriesWindow(cs, from, to, S.mode, true)) : [];
-        if (cp.length) out.push({name: nm + ' · ' + (other === 'xhs' ? '小红书' : '抖音'),
+        if (cp.length) out.push({name: other === 'xhs' ? '小红书' : '抖音',
                                  pts: cp, ci: 4, dash: false, kind: 'xhs'});
       }
     }
@@ -5343,7 +5346,7 @@ function drawChart(targetCv, targetW, targetH, targetDpr){
     g.beginPath(); g.moveTo(padL, y); g.lineTo(W - padR, y); g.stroke();
     g.fillText(unit(v), padL - 6, y + 3);
   }
-  /* 右轴只标粉色叠加线的刻度，不另画横网格；图例里会写「右轴」。 */
+  /* 右轴只标粉色叠加线的刻度，不另画横网格；图例直接用平台名区分。 */
   if (Y2) {
     g.textAlign = 'left'; g.textBaseline = 'middle';
     g.font = '10px sans-serif';
@@ -5462,7 +5465,7 @@ function drawChart(targetCv, targetW, targetH, targetDpr){
       + (barMode
         ? '<i class="bar' + (s.kind === 'yday' ? ' dim' : '') + '"></i>'
         : '<i' + (s.dash ? '' : ' class="solid"') + '></i>')
-      + stEsc(s.name) + (s.kind === 'xhs' ? ' · 右轴' : '') + '</span>').join('');
+      + stEsc(s.name) + '</span>').join('');
     lg.classList.add('on');
   } else { lg.classList.remove('on'); lg.innerHTML = ''; }
   // 说明
@@ -5507,7 +5510,7 @@ function drawChart(targetCv, targetW, targetH, targetDpr){
     const otherName = S.pf === 'xhs' ? '抖音' : '小红书';
     tips.push(hasX
       ? '粉色线 = 同名' + otherName + '话题的' + (S.pf === 'xhs' ? '播放量' : '浏览量')
-        + '（粉色走右轴，两侧各自按自己的量级缩放）'
+        + '（粉色走右侧坐标，两侧各自按自己的量级缩放）'
       : '同名' + otherName + '话题在这个范围里没数据（可能另一侧还没加这个话题）');
   }
   hint.textContent = (barMode
@@ -5693,7 +5696,7 @@ function chartPointer(e){
     const lg = chartList().map(s => ({
       name: s.name,
       color: s.kind === 'xhs' ? '#d64b86' : (s.ci ? '#d9663a' : '#2f6feb'),
-      dash: s.dash, right: s.kind === 'xhs',
+      dash: s.dash,
     }));
     const expChart = document.createElement('canvas');
     drawChart(expChart, 1488, 718, 2);
