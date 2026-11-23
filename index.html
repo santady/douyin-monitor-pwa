@@ -2863,38 +2863,36 @@ body.embedded .toolbar{width:auto; padding-bottom:0; flex-wrap:nowrap; margin-le
 
 
 /* ============================================================================
-   2026-11-12 控制台重排：主表 / 当前话题详情同屏
+   2026-11-23 控制台改为上下：总表在上，当前话题详情 / 趋势在下
    ----------------------------------------------------------------------------
-   原来「选中话题 → 总表 → KPI → 曲线 → 图片」全在一条纵向长页里，表格一屏
-   只露出十条，曲线要滚很久才看到。现在固定为「左侧总表 + 右侧详情」：
-   总表就是话题选择器，点行只换右侧内容，不再打断表格浏览。
-   左侧表格窄了以后允许横向滚动；右侧详情器单独滚动，不把表格一起拖走。
+   控制台里总表和详情不再左右分栏，统一为纵向布局；总表保留自己的滚动区，
+   详情和趋势整块排在下方，页面由 cockpit 自己滚动。
    ========================================================================== */
 section.view.cockpit{
-  display:grid;
-  grid-template-columns:minmax(0,1.05fr) minmax(520px,1.2fr);
+  display:flex;
+  flex-direction:column;
   gap:14px;
   height:100%;
   min-height:0;
-  overflow:hidden;
+  overflow-y:auto;
   padding:var(--sp-3) var(--sp-4) var(--sp-4);
   align-items:stretch;
 }
 
 .cockpit-main{
-  min-width:0; min-height:0; height:100%;
+  min-width:0; min-height:0; height:auto; flex:none;
   display:flex; flex-direction:column; gap:10px;
 }
 
 .cockpit-side{
-  min-width:0; min-height:0; height:100%;
-  overflow-y:auto; overscroll-behavior:contain;
+  min-width:0; min-height:0; height:auto; flex:none;
+  overflow:visible;
   display:flex; flex-direction:column; gap:10px;
-  padding:0 2px 12px 0;
+  padding:0;
 }
 
 .cockpit .all-topics{
-  flex:1 1 auto; min-height:0; margin:0;
+  flex:none; min-height:0; margin:0;
   display:flex; flex-direction:column;
   padding:12px 13px 10px;
 }
@@ -4050,7 +4048,7 @@ input,select,textarea{color:var(--ink);border:1px solid var(--line);background:v
         </div>
         <div class="ctr-1" id="cmpRow">
           <button id="btnYday" title="同一条曲线整条往前挪 24 小时，同色虚线叠一条">对比昨天</button>
-          <button id="btnXhsOv" title="同名另一平台话题的指标（虚线）：量纲不同，同轴看走势形状。首次点开会取另一侧平台数据">叠加小红书</button>
+          <button id="btnXhsOv" title="同名另一平台话题的指标（粉色虚线，读右侧独立坐标）：按各自量级缩放，不会因为数值差距被压成横线。首次点开会取另一侧平台数据">叠加小红书</button>
           <button id="btnChartPng" title="把当前趋势图导出为 PNG（系统「保存到文件」）">导出图</button>
         </div>
       </details>
@@ -5024,8 +5022,8 @@ function chartList(){
      （dy 台叠小红书浏览量，xhs 台叠抖音播放量）。App 不连服务端，
      另一侧数据由 ensureOverlayData 懒加载进 S.overlayCache 后这里同步取用；
      没加载到（还没取完 / 取失败）就先不画，开关下次重画会再试。
-     固定粉色虚线（kind='xhs'，drawChart 单独给它配色）；量纲不同，
-     同轴看走势形状，不是比绝对值。 */
+     固定粉色虚线（kind='xhs'，drawChart 单独给它配色）；右侧独立纵轴，
+     按各自量级缩放，绝对值可以直接对照。 */
   if (S.cmpXhs){
     const other = S.pf === 'xhs' ? 'dy' : 'xhs';
     const ov = (S.overlayCache || {})[other];
@@ -5140,12 +5138,19 @@ function drawChart(){
       s.pts = [...per.keys()].sort((a, b) => a - b).map(k => ({x: k, v: per.get(k)}));
     });
   }
-  const padL = 52, padR = 10, padT = 10, padB = 22;
-  // 横纵范围取所有线（含对照组）的合集：对照线被截在图外就失去意义了
+  const hasOverlay = lines.some(s => s.kind === 'xhs');
+  /* 叠加另一平台时右侧要留出独立刻度；不叠时仍保持原来的紧凑留白。 */
+  const padL = 52, padR = hasOverlay ? 58 : 10, padT = 10, padB = 22;
+  // 横纵范围：时间取所有线（含对照线），数值只取左轴的主线；
+  // 叠加小红书走右轴，不能把它的量级混进来把播放量压成平线。
   let tmin = Infinity, tmax = -Infinity, vmin = Infinity, vmax = -Infinity;
   lines.forEach(s => s.pts.forEach(p => {
     if (p.x < tmin) tmin = p.x;
     if (p.x > tmax) tmax = p.x;
+  }));
+  const mainAxisLines = lines.filter(s => s.kind !== 'xhs');
+  const axisLines = mainAxisLines.length ? mainAxisLines : lines;
+  axisLines.forEach(s => s.pts.forEach(p => {
     if (p.v < vmin) vmin = p.v;
     if (p.v > vmax) vmax = p.v;
   }));
@@ -5208,12 +5213,66 @@ function drawChart(){
     ? (t => padL + ((bucketOf(t) - g0) / barSpan + 0.5) * slotPx)
     : Xtime;
   const Y = v => H - padB - (v - vmin) / (vmax - vmin || 1) * (H - padT - padB);
+  /* 右轴：只有叠加另一平台时存在。小红书/抖音各自按自己的量级缩放，
+     粉色虚线不再因为绝对值差距被压成一条贴着零线的横线。 */
+  const overlayLines = lines.filter(s => s.kind === 'xhs');
+  let Y2 = null, oTicks = [], oLabel = () => '';
+  if (overlayLines.length) {
+    let oMin = Infinity, oMax = -Infinity;
+    overlayLines.forEach(s => s.pts.forEach(p => {
+      if (p.v < oMin) oMin = p.v;
+      if (p.v > oMax) oMax = p.v;
+    }));
+    let oSpan = oMax - oMin;
+    if (!(oSpan > 0)) oSpan = Math.max(Math.abs(oMax) * 0.002, 1);
+    const oPad = oSpan * 0.08;
+    const oYMin = oMin - oPad, oYMax = oMax + oSpan * 0.08;
+    Y2 = v => H - padB - (v - oYMin) / (oYMax - oYMin || 1) * (H - padT - padB);
+    /* 右轴刻度取整数档（100 万、200 万…），不要把 370/277/183 这种
+       等分出来的零碎数字写上，读起来比左轴费劲。 */
+    const niceStep = range => {
+      const exp = Math.floor(Math.log10(range));
+      const f = range / Math.pow(10, exp);
+      return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * Math.pow(10, exp);
+    };
+    let oStep = niceStep((oYMax - oYMin) / 4);
+    for (let n = 0; n < 6; n++) {
+      oTicks = [];
+      for (let v = Math.ceil(oYMin / oStep) * oStep; v <= oYMax + oStep * 1e-6; v += oStep) {
+        oTicks.push(v);
+      }
+      if (oTicks.length >= 3) break;
+      oStep /= 2;
+    }
+    const oAbsMax = Math.max(Math.abs(oMin), Math.abs(oMax));
+    const oUnit = oAbsMax >= 1e8 ? 1e8 : oAbsMax >= 1e4 ? 1e4 : 1;
+    const oSuffix = oUnit === 1e8 ? ' 亿' : oUnit === 1e4 ? ' 万' : '';
+    const oDec = oUnit === 1 ? 0 : (oStep / oUnit >= 1 ? 0 : oStep / oUnit >= 0.1 ? 1 : 2);
+    oLabel = v => {
+      const x = v / oUnit;
+      return (Math.abs(x) >= 1e4 ? Math.round(x).toLocaleString('en-US') : x.toFixed(oDec)) + oSuffix;
+    };
+  }
   // 网格 + 纵轴
   g.strokeStyle = LINE; g.fillStyle = '#8391a6'; g.font = '10px sans-serif'; g.textAlign = 'right';
   for (let i = 0; i <= 3; i++){
     const v = vmin + (vmax - vmin) * i / 3, y = Math.round(Y(v)) + .5;
     g.beginPath(); g.moveTo(padL, y); g.lineTo(W - padR, y); g.stroke();
     g.fillText(unit(v), padL - 6, y + 3);
+  }
+  /* 右轴只标粉色叠加线的刻度，不另画横网格；图例里会写「右轴」。 */
+  if (Y2) {
+    g.textAlign = 'left'; g.textBaseline = 'middle';
+    g.font = '10px sans-serif';
+    oTicks.forEach(v => {
+      const y = Math.round(Y2(v)) + .5;
+      if (y < padT || y > H - padB) return;
+      g.strokeStyle = '#d64b86'; g.globalAlpha = .55;
+      g.beginPath(); g.moveTo(W - padR, y); g.lineTo(W - padR + 3, y); g.stroke();
+      g.globalAlpha = 1; g.fillStyle = '#d64b86';
+      g.fillText(oLabel(v), W - padR + 5, y);
+    });
+    g.textBaseline = 'alphabetic';
   }
   if (barMode){
     /* 柱状：整点档 k 就是这一组的位置，不再用各自的真实时间戳定位。
@@ -5245,31 +5304,32 @@ function drawChart(){
     g.globalAlpha = 1; g.lineWidth = 1;
     /* 「叠加小红书」在柱状下以粉色虚线叠在柱上方，X 走同一套档位网格。 */
     lines.filter(s => s.kind === 'xhs').forEach(s => {
+      const yMap = Y2 || Y;
       g.strokeStyle = '#d64b86'; g.lineWidth = 2; g.lineJoin = 'round';
       g.setLineDash([6, 5]);
       g.beginPath();
-      s.pts.forEach((p, i) => { const x = X(p.x), y = Y(p.v); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+      s.pts.forEach((p, i) => { const x = X(p.x), y = yMap(p.v); i ? g.lineTo(x, y) : g.moveTo(x, y); });
       g.stroke();
       g.setLineDash([]);
     });
   } else {
-    // 面积：多话题也各自铺一层低透明色，才看得出各自的体量
+    // 面积：多话题也各自铺一层低透明色，才看得出各自的体量；右轴叠加线不铺面积
     lines.forEach(s => {
-      if(s.pts.length < 2 || vmin < 0) return;
+      if(s.pts.length < 2 || vmin < 0 || s.kind === 'xhs') return;
       const pts = s.pts;
       g.beginPath();
       pts.forEach((p, i) => { const x = X(p.x), y = Y(p.v); i ? g.lineTo(x, y) : g.moveTo(x, y); });
       g.lineTo(X(pts[pts.length - 1].x), Y(vmin)); g.lineTo(X(pts[0].x), Y(vmin)); g.closePath();
-      g.fillStyle = s.kind === 'xhs' ? 'rgba(214,75,134,.09)'
-        : (s.ci ? 'rgba(217,102,58,.08)' : 'rgba(47,111,235,.10)'); g.fill();
+      g.fillStyle = s.ci ? 'rgba(217,102,58,.08)' : 'rgba(47,111,235,.10)'; g.fill();
     });
     // 折线：主线先画，虚线后画（压在上面才看得见）；叠加小红书固定粉色
     lines.forEach(s => {
+      const yMap = s.kind === 'xhs' && Y2 ? Y2 : Y;
       g.strokeStyle = s.kind === 'xhs' ? '#d64b86' : (s.ci ? CMP : ACC);
       g.lineWidth = s.dash ? 1.5 : 1.8;
       if (s.dash){ g.save(); g.setLineDash([5, 4]); g.globalAlpha = .9; }
       g.beginPath();
-      s.pts.forEach((p, i) => { const x = X(p.x), y = Y(p.v); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+      s.pts.forEach((p, i) => { const x = X(p.x), y = yMap(p.v); i ? g.lineTo(x, y) : g.moveTo(x, y); });
       g.stroke();
       if (s.dash) g.restore();
     });
@@ -5321,7 +5381,7 @@ function drawChart(){
       + (barMode
         ? '<i class="bar' + (s.kind === 'yday' ? ' dim' : '') + '"></i>'
         : '<i' + (s.dash ? '' : ' class="solid"') + '></i>')
-      + stEsc(s.name) + '</span>').join('');
+      + stEsc(s.name) + (s.kind === 'xhs' ? ' · 右轴' : '') + '</span>').join('');
     lg.classList.add('on');
   } else { lg.classList.remove('on'); lg.innerHTML = ''; }
   // 说明
@@ -5366,7 +5426,7 @@ function drawChart(){
     const otherName = S.pf === 'xhs' ? '抖音' : '小红书';
     tips.push(hasX
       ? '粉色虚线 = 同名' + otherName + '话题的' + (S.pf === 'xhs' ? '播放量' : '浏览量')
-        + '（量纲不同，同轴看走势形状）'
+        + '（粉色走右轴，两侧各自按自己的量级缩放）'
       : '同名' + otherName + '话题在这个范围里没数据（可能另一侧还没加这个话题）');
   }
   hint.textContent = (barMode
@@ -5384,7 +5444,7 @@ function drawChart(){
   const invX = barMode
     ? (x => g0 + ((x - padL) / slotPx - 0.5) * barSpan)
     : (x => tmin + (x - padL) / ((W - padL - padR) || 1) * (tmax - tmin));
-  chartGeo = {lines, X, Y, invX, W, H, padL, padR, padT, padB, barMode, barGeo, tmin, tmax};
+  chartGeo = {lines, X, Y, Y2, overlay: hasOverlay, invX, W, H, padL, padR, padT, padB, barMode, barGeo, tmin, tmax};
   /* 拖拽选区（缩放预览）：半透明竖带画在最上层 */
   if(chartDrag){
     const xa = Math.min(chartDrag.x0, chartDrag.x1), xb = Math.max(chartDrag.x0, chartDrag.x1);
@@ -5418,9 +5478,11 @@ function paintChartHover(g){
     let p = null, d = Infinity;
     s.pts.forEach(q => { const dd = Math.abs(q.x - S.hover); if(dd < d){ d = dd; p = q; } });
     if(!p) return;
-    g.beginPath(); g.arc(geo.X(p.x), geo.Y(p.v), 4.2, 0, 7);
+    const yMap = s.kind === 'xhs' && geo.Y2 ? geo.Y2 : geo.Y;
+    g.beginPath(); g.arc(geo.X(p.x), yMap(p.v), 4.2, 0, 7);
     g.fillStyle = '#fff'; g.fill();
-    g.strokeStyle = s.ci ? '#d9663a' : '#2f6feb'; g.lineWidth = 1.8; g.stroke();
+    g.strokeStyle = s.kind === 'xhs' ? '#d64b86' : (s.ci ? '#d9663a' : '#2f6feb');
+    g.lineWidth = 1.8; g.stroke();
   });
 }
 function chartSnap(clientX){
@@ -5573,7 +5635,7 @@ function syncOverlayLabel(){
   const other = S.pf === 'xhs' ? '抖音' : '小红书';
   const metric = S.pf === 'xhs' ? '播放量' : '浏览量';
   ov.textContent = '叠加' + other;
-  ov.title = '同名' + other + '话题的' + metric + '（虚线）：量纲不同，同轴看走势形状。首次点开会取另一侧平台数据';
+  ov.title = '同名' + other + '话题的' + metric + '（粉色虚线，读右侧独立坐标）：按各自量级缩放，不会因为数值差距被压成横线。首次点开会取另一侧平台数据';
   ov.classList.toggle('on', S.cmpXhs);
 }
 /* 图表设置只保留「对比昨天」；对比话题统一走上方 chips 的「添加对比」，
