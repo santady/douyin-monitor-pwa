@@ -4185,9 +4185,13 @@ if (CFG.repo === 'SydawN/douyin-tag-monitor' || (CFG.token || '').startsWith('gh
   CFG.token = DEF.token;
   saveCfg();
 }
-/* 2026-11-24 Gitee 镜像迁到 yosomite：旧配置自动切新库。 */
-if (!CFG.giteeRepo || CFG.giteeRepo === 'santady/douyin-tag-monitor') {
+/* 2026-11-24 Gitee 镜像迁到 yosomite：旧配置自动切新库。
+   老版本 saveCfg 不存 giteeRepo，localStorage 里可能只有老 token，
+   所以同时用老 token 前缀兜底，避免「新库 + 老令牌」404。 */
+if (!CFG.giteeRepo || CFG.giteeRepo === 'santady/douyin-tag-monitor' ||
+    (CFG.giteeToken || '').startsWith('3ee327')) {
   CFG.giteeRepo = DEF.giteeRepo;
+  CFG.giteeToken = DEF.giteeToken;
   saveCfg();
 }
 
