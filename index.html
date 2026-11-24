@@ -4168,14 +4168,14 @@ const APP_VERSION = '__APP_VERSION__';
 const DEF = {
   repo: 'santady/douyin-tag-monitor',
   token: '',
-  giteeRepo: 'santady/douyin-tag-monitor',
+  giteeRepo: 'yosomite/douyin-tag-monitor',
   giteeToken: '',
   dbGroups: '',
   dbCookie: '',
 };
 let CFG = Object.assign({}, DEF, JSON.parse(localStorage.getItem('m3cfg') || '{}'));
 function saveCfg(){ localStorage.setItem('m3cfg', JSON.stringify({repo: CFG.repo, token: CFG.token,
-  giteeToken: CFG.giteeToken,
+  giteeRepo: CFG.giteeRepo, giteeToken: CFG.giteeToken,
   dbCookie: CFG.dbCookie, dbGroups: CFG.dbGroups})); }
 saveCfg();   // 把预填值写进存储（老版本数据键名不同，顺带迁移）
 
@@ -4183,6 +4183,11 @@ saveCfg();   // 把预填值写进存储（老版本数据键名不同，顺带�
 if (CFG.repo === 'SydawN/douyin-tag-monitor' || (CFG.token || '').startsWith('gho_')) {
   CFG.repo = DEF.repo;
   CFG.token = DEF.token;
+  saveCfg();
+}
+/* 2026-11-24 Gitee 镜像迁到 yosomite：旧配置自动切新库。 */
+if (!CFG.giteeRepo || CFG.giteeRepo === 'santady/douyin-tag-monitor') {
+  CFG.giteeRepo = DEF.giteeRepo;
   saveCfg();
 }
 
