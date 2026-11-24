@@ -1,4 +1,4 @@
-const CACHE = 'dtp-pwa-v17';
+const CACHE = 'dtp-pwa-v18';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', event => {
