@@ -4164,6 +4164,68 @@ body[data-view="detail"] .bottom-nav{display:none}
   .row{grid-template-columns:28px minmax(0,1fr) auto;gap:0 8px;padding:12px 11px}
   .row .vv{min-width:92px}.row .vv b{font-size:15px}
 }
+/* ===== 2026-11-24 信息架构重排：看榜 / 洞察 / 维护分层 ===== */
+.overview-block{order:0;padding:18px;border:0;color:#fff;background:radial-gradient(circle at 92% 0%,rgba(139,150,255,.42),transparent 42%),linear-gradient(135deg,#17203a,#293563);box-shadow:0 14px 34px rgba(23,32,58,.16)}
+.overview-block .eyebrow{color:#aeb8ff}.overview-block h1{margin:7px 0 6px;font-size:25px;font-weight:820;letter-spacing:-.045em}
+.overview-block p{margin:0;color:#c3cce2;font-size:11.5px;line-height:1.65}.overview-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:15px;color:#aeb8d2;font-size:9.5px}
+.live-pill{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}.live-pill i{width:6px;height:6px;border-radius:50%;background:#43d3a1;box-shadow:0 0 0 3px rgba(67,211,161,.13)}
+.home-health{order:1;padding:11px 12px}.home-health .section-head{display:flex;margin-bottom:8px}.home-health .section-head span{font-size:11px}.home-health .section-head small{font-size:9px;color:var(--mute)}
+.home-health #health{padding:0;border:0;background:transparent;overflow:visible}
+.home-health #health .dashboard-health-summary{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.home-health #health .dashboard-health-summary::-webkit-scrollbar{display:none}
+.home-health #health .dashboard-health-summary>b{display:none}
+.home-health #health .dashboard-health-summary .hh-kpi:first-of-type{display:inline-flex}
+.home-health #health .hh-kpi{flex:0 0 auto;min-width:61px;padding:7px 9px;border-radius:10px;background:var(--panel2)}
+.home-health #health .hh-kpi:first-of-type{min-width:92px}
+.home-health #health .hh-kpi>em{font-size:14px}.home-health #health .hh-kpi>i{font-size:8.5px}
+.home-health #health details{margin-top:8px}.home-health #health details summary{font-size:10px}
+.home-main{order:2;width:100%;min-width:0}
+.list-head{align-items:flex-start;margin:4px 2px 13px}.list-head h2{margin-top:4px;font-size:28px;letter-spacing:-.05em}
+.list-desc{margin:5px 0 0;color:var(--mute);font-size:10.5px;line-height:1.5}.list-head-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.list-meta{white-space:nowrap}.xrank-entry{min-height:31px;padding:0 10px;font-size:9.5px;background:var(--accent-soft);color:var(--accent);box-shadow:none}.xrank-entry span{margin-left:3px}
+.tools{padding:13px;margin-bottom:15px}.search-label{display:block;margin:0 0 7px 2px;color:var(--ink2);font-size:10.5px;font-weight:700}
+.filter-row{display:flex;align-items:flex-start;gap:9px;margin-top:12px}.filter-label{flex:none;padding-top:8px;color:var(--mute);font-size:10px;font-weight:650}
+.filter-row #cats,.filter-disclosure #crossCats{display:flex;flex-wrap:nowrap;gap:6px;min-width:0;overflow-x:auto;scrollbar-width:none;padding:0 0 2px}
+.filter-row #cats::-webkit-scrollbar,.filter-disclosure #crossCats::-webkit-scrollbar{display:none}
+.filter-row .chip,.filter-disclosure .chip{flex:0 0 auto;min-height:30px;padding:0 11px}
+.rank-control{margin-top:12px}.rank-control .filter-label{display:block;padding:0;margin-bottom:7px}
+.rank-control .seg2{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;padding:4px}
+.xrank-tools .rank-control .seg2{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rank-control .seg2 button{min-height:35px;padding:0 4px;font-size:10px;white-space:nowrap}
+.rows{gap:10px}.row{min-height:88px;padding:15px 13px}.row .nm{font-size:15.5px}.row .vv b{font-size:18px}.row .vv-k{font-size:8.5px}.row .ct{font-size:10.5px}
+.view-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin:2px 2px 16px}.view-heading h1{margin:5px 0 7px;font-size:29px;font-weight:830;letter-spacing:-.05em}.view-heading p{max-width:520px;margin:0;color:var(--mute);font-size:11px;line-height:1.65}.view-heading-side{display:flex;flex-direction:column;align-items:flex-end;gap:9px;flex:none}
+.cross-view{padding-top:18px}.cross-heading{margin-bottom:14px}.cross-heading p{max-width:270px}.xrank-back{height:30px;padding:0 10px;font-size:9.5px;background:var(--panel);color:var(--mute);box-shadow:var(--sh-1)}
+.xrank-tools{margin-bottom:13px}.select-field{display:flex;flex:1;flex-direction:column;gap:6px;min-width:0}.select-field>span{color:var(--mute);font-size:9.5px;font-weight:650}.select-field select{width:100%;height:37px;padding:0 9px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--ink2);font:inherit;font-size:10.5px}
+.xrank-options{display:flex;align-items:flex-end;gap:10px;margin-top:12px}.xrank-both{display:flex;align-items:center;gap:6px;height:37px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);font-size:10.5px;white-space:nowrap}.xrank-both input{accent-color:var(--accent)}
+.filter-disclosure{margin-top:12px;padding-top:11px;border-top:1px solid var(--line2)}.filter-disclosure summary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;color:var(--ink2);font-size:10.5px;font-weight:650;list-style:none}.filter-disclosure summary::-webkit-details-marker{display:none}.filter-disclosure summary::after{content:"＋";color:var(--mute);font-size:14px}.filter-disclosure[open] summary::after{content:"−"}.filter-disclosure summary span{margin-left:auto;color:var(--mute);font-size:9.5px;font-weight:500}.filter-disclosure #crossCats{padding-top:10px}
+.xrank-status{margin:0 2px 10px}.xrank-item{padding:15px}.xrank-name{font-size:16px}.xrank-score b{font-size:22px}
+.workbench-view{padding-top:18px}.platform-badge{display:inline-flex;align-items:center;min-height:29px;padding:0 11px;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-size:10px;font-weight:700}
+.wb-section{margin-top:19px}.wb-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 2px 9px}.wb-section-head h2{margin:0;font-size:13px;font-weight:760}.wb-section-head>span{color:var(--mute);font-size:9px}
+.wb-grid{display:grid;gap:9px}.wb-card,.wb-wide{display:flex;align-items:center;gap:12px;width:100%;padding:14px;border:1px solid var(--line);border-radius:17px;background:var(--panel);box-shadow:var(--sh-1);text-align:left}
+.wb-icon{display:flex;flex:none;align-items:center;justify-content:center;width:39px;height:39px;border-radius:12px;background:var(--accent-soft);color:var(--accent)}.wb-icon svg{width:19px;height:19px}.wb-icon.anomaly{background:#fff3e8;color:#c87925}.wb-icon.detail{background:#eaf8f3;color:#159a78}.wb-icon.add{background:#eef0ff;color:#5b67f1}.wb-icon.refresh{background:#f1f3f8;color:#64728d}
+.wb-copy{display:flex;flex:1;flex-direction:column;gap:4px;min-width:0}.wb-copy b{font-size:13px;font-weight:740}.wb-copy small{color:var(--mute);font-size:10px;line-height:1.45}.wb-arrow{color:#aab3c6;font-size:22px;font-weight:300}
+.wb-wide{margin-top:9px}.wb-wide.compact{margin-top:9px}.collect-panel{display:grid;grid-template-columns:minmax(0,1fr) 126px;gap:12px;padding:14px;border:1px solid #e5e3fb;border-radius:17px;background:linear-gradient(135deg,#f7f7ff,#fff)}.collect-info p{margin:8px 0 0;color:var(--mute);font-size:10px;line-height:1.6}.collect-info .live-pill{color:var(--accent);font-size:10px;font-weight:700}
+.collect-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:66px;padding:8px;border:0;border-radius:13px;background:var(--accent);color:#fff;box-shadow:0 8px 18px rgba(91,103,241,.2)}.collect-btn span{font-size:11px;font-weight:750}.collect-btn small{color:#dfe2ff;font-size:8.5px}.collect-btn:disabled{opacity:.6}
+.wb-health{padding:13px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}.wb-health .dashboard-health-summary{display:flex;flex-wrap:wrap;gap:6px}.wb-health .dashboard-health-summary>b{width:100%;font-size:11px}.wb-health .hh-kpi{min-width:62px;padding:7px 9px;border-radius:9px;background:var(--panel2)}.wb-health .hh-kpi>em{font-size:14px}.wb-health .hh-kpi>i{font-size:8.5px}.wb-health details{margin-top:8px}
+.trend-head{align-items:flex-start;margin-bottom:12px}.trend-head>div{min-width:0}.trend-head h3{font-size:18px}.trend-head .sub{font-size:10px}.chart-range-badge{flex:none;min-height:28px;padding:0 10px;border-radius:9px;background:var(--accent-soft);color:var(--accent);font-size:9.5px;font-weight:700;line-height:28px}
+.trend-stats{margin:0 0 16px}.trend-stat{padding:12px}.trend-stat b{font-size:19px}.chart-stage{position:relative}.compare-more{margin-top:10px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}.compare-more summary{cursor:pointer;color:var(--ink2);font-size:11px;font-weight:650;list-style:none}.compare-more summary::-webkit-details-marker{display:none}.compare-more summary i{margin-left:5px;color:var(--mute);font-size:9px;font-style:normal;font-weight:500}.compare-more .trend-picker{margin-top:11px}
+@media(min-width:560px){
+  .wb-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.wb-card{align-items:flex-start;flex-direction:column}.wb-card .wb-arrow{display:none}.wb-copy small{min-height:30px}
+  .home-health #health .dashboard-health-summary{flex-wrap:wrap}.home-health #health .hh-kpi{flex:1 1 90px}
+}
+@media(min-width:980px){
+  #home{display:grid;max-width:1280px;grid-template-columns:minmax(0,1fr) 330px;gap:24px;padding:24px 24px 44px}
+  .home-side{display:flex;gap:14px}.overview-block{padding:22px}.overview-block h1{font-size:28px}.home-health{padding:15px}.home-main{width:auto}
+  .list-head h2{font-size:30px}.tools{padding:16px}.rank-control .seg2 button{font-size:11px}
+  .cross-view,.workbench-view{max-width:1120px;padding:26px 26px 120px}.view-heading h1{font-size:34px}.view-heading p{font-size:13px}.cross-heading p{max-width:560px}
+  .wb-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.wb-card{min-height:150px}.wb-section{margin-top:26px}.wb-section-head h2{font-size:16px}.wb-copy b{font-size:15px}.wb-copy small{font-size:11.5px}.collect-panel{grid-template-columns:minmax(0,1fr) 180px}.collect-btn span{font-size:13px}
+  .wb-health .dashboard-health-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:370px){
+  .overview-block{padding:15px}.overview-block h1{font-size:22px}.overview-meta{align-items:flex-start;flex-direction:column;gap:7px}
+  .list-head h2{font-size:25px}.xrank-entry{font-size:9px}.rank-control .seg2 button{font-size:9px}
+  .collect-panel{grid-template-columns:minmax(0,1fr) 112px}.collect-btn span{font-size:10px}.view-heading h1{font-size:26px}
+}
 </style>
 </head>
 <body>
@@ -4207,57 +4269,47 @@ body[data-view="detail"] .bottom-nav{display:none}
 
 <main class="view" id="home">
   <aside class="home-side">
-    <section class="side-block actions-block" aria-label="快捷操作">
-      <div class="section-head"><span>快捷操作</span><small>常用入口</small></div>
-      <div class="acts" id="acts">
-        <button class="act primary" id="actCollect" title="立即采集一轮数据">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 3v6h-6"/></svg>
-          <span>立即采集</span>
-        </button>
-        <button class="act" id="actReport" title="查看报表">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 3h11l5 5v13H4z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg>
-          <span>看报表</span>
-        </button>
-        <button class="act" id="actAnom" title="异常分析">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17.5v.5"/></svg>
-          <span>异常分析</span>
-        </button>
-      </div>
+    <section class="side-block overview-block" aria-label="当前平台概览">
+      <span class="eyebrow">OVERVIEW</span>
+      <h1 id="homeTitle">抖音话题增长</h1>
+      <p id="homeSub">每小时自动采集，按增长变化查看值得关注的话题。</p>
+      <div class="overview-meta"><span id="homeStamp">正在读取数据…</span><span class="live-pill"><i></i>自动更新</span></div>
     </section>
-
-    <section class="side-block status-block" aria-label="数据状态">
-      <div class="section-head"><span>数据状态</span><small>每小时更新</small></div>
-      <div class="statusrow">
-        <div id="health" class="health-box" role="status" aria-live="polite"></div>
-        <button class="btn lab-btn" id="btnLab" title="话题数据详情 · 单话题 / 时间段">
-          <span>数据工作台</span>
-          <small>单话题 · 时间段</small>
-        </button>
-      </div>
+    <section class="side-block status-block home-health" aria-label="数据状态">
+      <div class="section-head"><span>数据健康</span><small>异常与缺失汇总</small></div>
+      <div id="health" class="health-box" role="status" aria-live="polite"></div>
     </section>
   </aside>
 
   <section class="home-main" aria-label="话题榜单">
-    <div class="tools">
-      <div class="search">
-        <input id="q" placeholder="搜索话题或 ID…" autocomplete="off" aria-label="搜索话题或 ID">
-      </div>
-      <div id="cats" aria-label="话题分类"></div>
-      <div class="seg2" id="dimbar" role="group" aria-label="榜单口径">
-        <button data-d="d1" class="on">24h 榜</button>
-        <button data-d="h1">1h 榜</button>
-        <button data-d="h1qoq">1h 环比</button>
-        <button data-d="qoq">环比</button>
-      </div>
-    </div>
     <div class="list-head">
       <div>
         <span class="eyebrow">RANKING</span>
         <h2>话题榜</h2>
+        <p class="list-desc">选择统计口径，按增长表现从高到低排列</p>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-        <button type="button" class="xrank-entry" id="btnCrossRank" aria-controls="crossRank">跨平台增长榜</button>
+      <div class="list-head-side">
         <div class="list-meta" id="listMeta" aria-live="polite"></div>
+        <button type="button" class="xrank-entry" id="btnCrossRank" aria-controls="crossRank">跨平台对比 <span>↗</span></button>
+      </div>
+    </div>
+    <div class="tools">
+      <label class="search-label" for="q">搜索话题</label>
+      <div class="search">
+        <input id="q" placeholder="输入话题名称或 ID" autocomplete="off" aria-label="搜索话题或 ID">
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">分类</span>
+        <div id="cats" aria-label="话题分类"></div>
+      </div>
+      <div class="rank-control">
+        <span class="filter-label">排名口径</span>
+        <div class="seg2" id="dimbar" role="group" aria-label="榜单口径">
+          <button data-d="d1" class="on">24小时增量</button>
+          <button data-d="h1">1小时增量</button>
+          <button data-d="h1qoq">1小时环比</button>
+          <button data-d="qoq">24小时环比</button>
+        </div>
       </div>
     </div>
     <div class="rows" id="list"></div>
@@ -4265,37 +4317,102 @@ body[data-view="detail"] .bottom-nav{display:none}
 </main>
 
 <section class="view cross-view" id="crossRank" hidden aria-label="跨平台增长榜">
-  <button type="button" class="xrank-back" id="btnCrossBack">← 返回话题榜</button>
-  <div class="tools xrank-tools">
-    <div class="search">
-      <input id="crossQ" type="search" placeholder="搜索同名话题、ID 或分类…" autocomplete="off" aria-label="搜索跨平台话题">
-    </div>
-    <div id="crossCats" aria-label="跨平台话题分类"></div>
-    <div class="seg2" id="crossMetricBar" role="group" aria-label="增长时间窗口">
-      <button type="button" data-metric="d1" class="on">24 小时</button>
-      <button type="button" data-metric="d12">12 小时</button>
-      <button type="button" data-metric="d7">7 天</button>
-    </div>
-    <div class="xrank-options">
-      <select id="crossSort" aria-label="跨平台榜单排序">
-        <option value="avg">平台平均增长率</option>
-        <option value="max">单平台最高增长率</option>
-        <option value="dy">抖音原始增量</option>
-        <option value="xhs">小红书原始增量</option>
-      </select>
-      <label class="xrank-both"><input id="crossBoth" type="checkbox" checked>只看双平台</label>
-    </div>
-  </div>
-  <div class="list-head">
+  <header class="view-heading cross-heading">
     <div>
       <span class="eyebrow">CROSS PLATFORM</span>
-      <h2>跨平台增长榜</h2>
+      <h1>跨平台增长榜</h1>
+      <p>精确匹配同名话题，分别比较增长率；播放量与浏览量不相加。</p>
     </div>
-    <div class="list-meta" id="crossMeta" aria-live="polite"></div>
+    <div class="view-heading-side">
+      <div class="list-meta" id="crossMeta" aria-live="polite"></div>
+      <button type="button" class="xrank-back" id="btnCrossBack">返回榜单</button>
+    </div>
+  </header>
+  <div class="tools xrank-tools">
+    <label class="search-label" for="crossQ">查找话题</label>
+    <div class="search">
+      <input id="crossQ" type="search" placeholder="话题名称、ID 或分类" autocomplete="off" aria-label="搜索跨平台话题">
+    </div>
+    <div class="rank-control">
+      <span class="filter-label">增长窗口</span>
+      <div class="seg2" id="crossMetricBar" role="group" aria-label="增长时间窗口">
+        <button type="button" data-metric="d1" class="on">近 24 小时</button>
+        <button type="button" data-metric="d12">近 12 小时</button>
+        <button type="button" data-metric="d7">近 7 天</button>
+      </div>
+    </div>
+    <div class="xrank-options">
+      <label class="select-field"><span>排序方式</span>
+        <select id="crossSort" aria-label="跨平台榜单排序">
+          <option value="avg">平台平均增长率</option>
+          <option value="max">单平台最高增长率</option>
+          <option value="dy">抖音原始增量</option>
+          <option value="xhs">小红书原始增量</option>
+        </select>
+      </label>
+      <label class="xrank-both" title="只显示抖音和小红书都监控到的话题"><input id="crossBoth" type="checkbox" checked>仅双平台</label>
+    </div>
+    <details class="filter-disclosure">
+      <summary>按分类筛选 <span id="crossCatSummary">全部分类</span></summary>
+      <div id="crossCats" aria-label="跨平台话题分类"></div>
+    </details>
   </div>
-  <p class="xrank-note">按同名话题配对；增长率分别用各平台总量作分母，播放量与浏览量不相加。缺少有效窗口数据的话题排在末尾。</p>
   <div class="xrank-status" id="crossStatus" role="status" aria-live="polite"></div>
   <div id="crossList"></div>
+</section>
+
+<section class="view workbench-view" id="workbench" hidden aria-label="工作台">
+  <header class="view-heading">
+    <div>
+      <span class="eyebrow">WORKSPACE</span>
+      <h1>工作台</h1>
+      <p>查看分析结果、维护话题列表，或手动触发一次云端采集。</p>
+    </div>
+    <div class="view-heading-side"><span class="platform-badge" id="wbPlatform">抖音</span></div>
+  </header>
+
+  <section class="wb-section">
+    <div class="wb-section-head"><h2>数据洞察</h2><span>先看报表，再处理异常</span></div>
+    <div class="wb-grid">
+      <button type="button" class="wb-card" id="actReport">
+        <span class="wb-icon report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 3h11l5 5v13H4z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg></span>
+        <span class="wb-copy"><b>监控报表</b><small>查看当前平台的阶段性总结</small></span><span class="wb-arrow">›</span>
+      </button>
+      <button type="button" class="wb-card" id="actAnom">
+        <span class="wb-icon anomaly"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17.5v.5"/></svg></span>
+        <span class="wb-copy"><b>异常分析</b><small>定位突增、突降和可疑时段</small></span><span class="wb-arrow">›</span>
+      </button>
+      <button type="button" class="wb-card" id="btnLab">
+        <span class="wb-icon detail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>
+        <span class="wb-copy"><b>单话题数据</b><small>按话题和日期区间查看明细</small></span><span class="wb-arrow">›</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="wb-section">
+    <div class="wb-section-head"><h2>话题维护</h2><span>修改会同步到两个平台</span></div>
+    <button type="button" class="wb-wide" id="wbAddTopic">
+      <span class="wb-icon add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12h14"/></svg></span>
+      <span class="wb-copy"><b>新增监控话题</b><small>按名称搜索，或直接填写抖音与小红书链接</small></span><span class="wb-arrow">›</span>
+    </button>
+  </section>
+
+  <section class="wb-section">
+    <div class="wb-section-head"><h2>采集与维护</h2><span>云端任务</span></div>
+    <div class="collect-panel">
+      <div class="collect-info"><span class="live-pill"><i></i>每小时自动采集</span><p>正常情况下无需手动触发。手动采集会立即运行一轮 GitHub Actions。</p></div>
+      <button type="button" class="collect-btn" id="actCollect"><span>立即采集一轮</span><small>触发云端任务</small></button>
+    </div>
+    <button type="button" class="wb-wide compact" id="wbRefresh">
+      <span class="wb-icon refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a9 9 0 11-2.6-6.4"/><path d="M21 3v6h-6"/></svg></span>
+      <span class="wb-copy"><b>刷新当前数据</b><small>重新拉取榜单、历史与讨论数据</small></span><span class="wb-arrow">›</span>
+    </button>
+  </section>
+
+  <section class="wb-section">
+    <div class="wb-section-head"><h2>当前数据状态</h2><span id="wbStamp">—</span></div>
+    <div class="wb-health" id="workbenchHealth"></div>
+  </section>
 </section>
 
 <section id="detail">
@@ -4314,19 +4431,12 @@ body[data-view="detail"] .bottom-nav{display:none}
   </div>
   <div class="view" id="dView">
     <div class="card trend-card">
-      <div class="field-head"><span>对比话题</span><small>可选 · 最多一个</small></div>
-      <div class="trend-picker">
-        <div class="trend-chips" id="trendChips"></div>
-        <div class="trend-add-wrap">
-          <button type="button" class="trend-add" id="trendAddBtn"
-                  aria-expanded="false" aria-controls="trendMenu">＋ 添加对比话题</button>
-          <div class="trend-menu" id="trendMenu">
-            <input id="trendSearch" type="search" placeholder="搜索话题名" autocomplete="off" aria-label="搜索对比话题">
-            <div class="trend-options" id="trendOptions"></div>
-          </div>
-        </div>
+      <div class="trend-head">
+        <div><h3>趋势曲线</h3><div class="sub" id="chSub"></div></div>
+        <span class="chart-range-badge" id="chartRangeBadge">近 24 小时</span>
       </div>
-      <div class="field-head"><span>时间范围</span><small>快捷档位 / 自定义区间</small></div>
+      <div class="trend-stats" id="trendStats"></div>
+      <div class="field-head"><span>时间范围</span><small>选择快捷档位或自定义日期</small></div>
       <div class="trend-range-wrap">
         <div class="trend-quick" id="trendQuick" role="group" aria-label="快捷时间范围">
           <button type="button" data-days="0.25">近 6 小时</button>
@@ -4336,22 +4446,19 @@ body[data-view="detail"] .bottom-nav{display:none}
           <button type="button" data-days="30">近 30 天</button>
         </div>
         <div class="trend-rangebar">
-          <span class="trend-range-label">日期区间</span>
+          <span class="trend-range-label">自定义日期</span>
           <input type="date" id="trendFrom" aria-label="趋势开始日期">
           <span class="trend-range-sep">至</span>
           <input type="date" id="trendTo" aria-label="趋势结束日期">
         </div>
       </div>
-      <div class="trend-head">
-        <h3>趋势曲线</h3>
+      <div class="chart-stage">
+        <canvas id="chart"></canvas>
+        <div class="chart-tip" id="chTip" hidden></div>
+        <div class="ch-lg" id="chLegend"></div>
       </div>
-      <div class="sub" id="chSub"></div>
-      <div class="trend-stats" id="trendStats"></div>
-      <canvas id="chart"></canvas>
-      <div class="chart-tip" id="chTip" hidden></div>
-      <div class="ch-lg" id="chLegend"></div>
       <details class="chart-more">
-        <summary>图表设置 <i>形态 / 对比</i></summary>
+        <summary>图表设置 <i>形态 / 对比 / 导出</i></summary>
         <div class="ctr-1" id="modes">
           <button data-m="inc" class="on">增量</button>
           <button data-m="total">总量</button>
@@ -4376,6 +4483,20 @@ body[data-view="detail"] .bottom-nav{display:none}
           <button id="btnYday" title="同一条曲线整条往前挪 24 小时，同色虚线叠一条">对比昨天</button>
           <button id="btnXhsOv" title="同名另一平台话题的指标（粉色线，读右侧独立坐标）：按各自量级缩放，不会因为数值差距被压成横线。首次点开会取另一侧平台数据">叠加小红书</button>
           <button id="btnChartPng" title="把当前趋势图导出为 PNG（系统「保存到文件」）">导出图</button>
+        </div>
+      </details>
+      <details class="compare-more" id="compareMore">
+        <summary>与其他话题对比 <i>可选一个话题</i></summary>
+        <div class="trend-picker">
+          <div class="trend-chips" id="trendChips"></div>
+          <div class="trend-add-wrap">
+            <button type="button" class="trend-add" id="trendAddBtn"
+                    aria-expanded="false" aria-controls="trendMenu">＋ 添加对比话题</button>
+            <div class="trend-menu" id="trendMenu">
+              <input id="trendSearch" type="search" placeholder="搜索话题名" autocomplete="off" aria-label="搜索对比话题">
+              <div class="trend-options" id="trendOptions"></div>
+            </div>
+          </div>
         </div>
       </details>
       <div class="hint" id="chHint"></div>
@@ -4681,10 +4802,14 @@ function fmtDataAt(at){
 }
 function setStamp(at, cached, err){
   const el = $('#sub');
-  if (err){ el.textContent = err; el.className = 't2 warn'; return; }
-  if (!at){ el.textContent = '当前数据时间：暂无'; el.className = 't2'; return; }
-  const txt = '数据时间 ' + fmtDataAt(at) + (cached ? '（缓存）' : '');
-  el.textContent = txt; el.className = 't2';
+  let txt;
+  if (err){ txt = err; el.className = 't2 warn'; }
+  else if (!at){ txt = '当前数据时间：暂无'; el.className = 't2'; }
+  else { txt = '数据时间 ' + fmtDataAt(at) + (cached ? '（缓存）' : ''); el.className = 't2'; }
+  el.textContent = txt;
+  const homeStamp = $('#homeStamp'), wbStamp = $('#wbStamp');
+  if (homeStamp) homeStamp.textContent = txt;
+  if (wbStamp) wbStamp.textContent = txt;
 }
 
 /* ---------------- 行计算（口径与电脑端一致） ---------------- */
@@ -4937,7 +5062,7 @@ function renderAll(){
     loadError: S.errors[S.pf], discussionError: S.pf === 'xhs' ? S.discussionError : ''
   });
   setStamp(data.at, data.cached, S.errors[S.pf]);
-  renderCats(); renderList();
+  renderCats(); renderList(); renderWorkbench();
 }
 
 function renderCats(){
@@ -5048,6 +5173,8 @@ function renderCrossCats(){
   ['dy', 'xhs'].forEach(pf => (S.data[pf] && S.data[pf].rows || []).forEach(r =>
     (r.cats || [r.cat || '未分类']).forEach(c => cats.add(c))));
   if (S.cross.cat && !cats.has(S.cross.cat)) S.cross.cat = '';
+  const summary = $('#crossCatSummary');
+  if (summary) summary.textContent = S.cross.cat || '全部分类';
   $('#crossCats').innerHTML = [...cats].sort((a, b) => a.localeCompare(b, 'zh-CN')).map(c =>
     '<button type="button" class="chip' + (S.cross.cat === c ? ' on' : '') +
     '" data-cat="' + stEsc(c) + '">' + stEsc(c) + '</button>').join('');
@@ -5133,10 +5260,36 @@ function syncBottomNav(view){
   });
 }
 function currentMainView(){
+  if (!$('#workbench').hidden) return 'lab';
   return $('#crossRank').hidden ? 'home' : 'cross';
+}
+function openWorkbench(){
+  $('#home').hidden = true;
+  $('#crossRank').hidden = true;
+  $('#workbench').hidden = false;
+  document.querySelector('.ptabs').hidden = false;
+  $('#workbench').scrollTop = 0;
+  syncBottomNav('lab');
+  renderWorkbench();
+}
+function closeWorkbench(){
+  if ($('#workbench').hidden) return;
+  $('#workbench').hidden = true;
+  $('#home').hidden = false;
+  syncBottomNav('home');
+}
+function renderWorkbench(){
+  const data = D();
+  const platform = $('#wbPlatform');
+  if (platform) platform.textContent = S.pf === 'xhs' ? '小红书' : '抖音';
+  const health = $('#workbenchHealth');
+  if (health) health.innerHTML = dashboardHealthHtml(data.rows, S.pf, {
+    loadError: S.errors[S.pf], discussionError: S.pf === 'xhs' ? S.discussionError : ''
+  });
 }
 function openCrossRank(){
   $('#home').hidden = true;
+  $('#workbench').hidden = true;
   $('#crossRank').hidden = false;
   document.querySelector('.ptabs').hidden = true;
   syncBottomNav('cross');
@@ -5232,6 +5385,8 @@ function renderTrendQuick(){
   if(!box) return;
   [...box.querySelectorAll('button')].forEach(b =>
     b.classList.toggle('on', !S.trendCustom && Number(b.dataset.days) === Number(S.range)));
+  const badge = $('#chartRangeBadge');
+  if (badge) badge.textContent = S.trendCustom ? '自定义区间' : rangeName(S.range);
 }
 function renderTrendRange(from, to){
   const a = S.trendCustom ? S.trendCustom.from : from;
@@ -5300,6 +5455,10 @@ function openDetail(ch){
   /* 首屏只保留趋势与核心指标；形态 / 对比等低频设置按需展开。 */
   const chartMore = document.querySelector('.chart-more');
   if (chartMore) chartMore.open = false;
+  const compareMore = document.querySelector('.compare-more');
+  if (compareMore) compareMore.open = false;
+  const rangeBadge = $('#chartRangeBadge');
+  if (rangeBadge) rangeBadge.textContent = rangeName(S.range);
   try {
     fillCmpSel();                    // 下拉跟着当前话题重填，对比项不能还是上一个话题
     renderTrendChips();
@@ -6346,6 +6505,7 @@ async function openReport(kind){
 
 /* ---------------- 立即采集（触发云端 workflow）---------------- */
 async function actCollect(){
+  if (!window.confirm('确认立即触发一轮云端采集？正常每小时都会自动运行。')) return;
   /* 防抖：dispatch 没有进度可等，弱网下连点会触发多轮 Actions（2026-11-15 UI 审查）。
      按钮里有 svg，文案只动 span，别把图标抹掉。 */
   const btn = $('#actCollect');
@@ -6361,7 +6521,7 @@ async function actCollect(){
   }catch(e){
     toast('触发失败：' + e.message + '（令牌可能没有 actions 权限）', true);
   }finally{
-    btn.disabled = false; label.textContent = '立即采集';
+    btn.disabled = false; label.textContent = '立即采集一轮';
   }
 }
 
@@ -7006,11 +7166,19 @@ function toast(msg, bad){
 }
 
 /* ---------------- 事件接线 ---------------- */
+function syncPlatformCopy(){
+  const homeTitle = $('#homeTitle'), homeSub = $('#homeSub');
+  if (homeTitle) homeTitle.textContent = (S.pf === 'xhs' ? '小红书' : '抖音') + '话题增长';
+  if (homeSub) homeSub.textContent = S.pf === 'xhs'
+    ? '每小时自动采集，按浏览量增长查看值得关注的话题。'
+    : '每小时自动采集，按播放量增长查看值得关注的话题。';
+}
 function setPlatform(pf){
   if (!['dy', 'xhs'].includes(pf)) return;
   closeCrossRank();
   S.pf = pf;
   localStorage.setItem('m3pf', S.pf);
+  syncPlatformCopy();
   document.querySelectorAll('.ptab').forEach(x => {
     const on = x.dataset.pf === S.pf;
     x.classList.toggle('on', on);
@@ -7059,11 +7227,14 @@ $('#actAnom').onclick = () => openAnoms(S.pf);
 $('#navHome').onclick = () => {
   if ($('#sheet').classList.contains('on')) closeSheet();
   closeCrossRank();
+  closeWorkbench();
   window.scrollTo({top: 0, behavior: 'smooth'});
 };
 $('#navCross').onclick = openCrossRank;
-$('#navLab').onclick = () => openReport(S.pf);
+$('#navLab').onclick = openWorkbench;
 $('#navSettings').onclick = openSettings;
+$('#wbAddTopic').onclick = openAdd;
+$('#wbRefresh').onclick = () => refresh(undefined, true);
 syncBottomNav('home');
 window.addEventListener('popstate', () => {
   if ($('#detail').classList.contains('on')) {
@@ -7229,6 +7400,7 @@ $('#btnDel').onclick = () => { if (S.sel) removeTopic(S.pf, S.sel); };
 /* ---------------- 启动 ---------------- */
 function boot(){
   restoreListPrefs();
+  syncPlatformCopy();
   document.querySelectorAll('.ptab').forEach(b => {
     const on = b.dataset.pf === S.pf;
     b.classList.toggle('on', on);
