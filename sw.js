@@ -1,4 +1,4 @@
-const CACHE = 'dtp-pwa-v18';
+const CACHE = 'dtp-pwa-v22';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', event => {
@@ -22,22 +22,19 @@ self.addEventListener('fetch', event => {
   if (req.method !== 'GET') return;
   if (new URL(req.url).origin !== self.location.origin) return;
 
-  /* 页面骨架先用缓存秒开，后台再更新；下一次打开就是新版。 */
+  /* 页面优先取线上最新版，断网时才回退缓存；避免新版发布后仍被旧壳挡住。 */
   if (req.mode === 'navigate') {
     event.respondWith((async () => {
-      const cached = await caches.match('./index.html');
-      const refresh = fetch(req).then(resp => {
+      try {
+        const resp = await fetch(req, {cache: 'no-store'});
         if (resp.ok) {
           const copy = resp.clone();
           caches.open(CACHE).then(cache => cache.put('./index.html', copy));
         }
         return resp;
-      }).catch(() => null);
-      if (cached) {
-        refresh.catch(() => {});
-        return cached;
+      } catch (e) {
+        return (await caches.match('./index.html')) || Response.error();
       }
-      return (await refresh) || caches.match('./index.html');
     })());
     return;
   }
