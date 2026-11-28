@@ -1,0 +1,30 @@
+{
+ "douyin_collect": {
+  "at": 1794229296,
+  "last_ok_at": 1794229296,
+  "ok": true,
+  "why": ""
+ },
+ "douyin_fresh": {
+  "alerted": false,
+  "at": 1795302773,
+  "fail_since": null,
+  "last_ok_at": 1795302773,
+  "ok": true,
+  "why": ""
+ },
+ "xhs_collect": {
+  "at": 1794229288,
+  "last_ok_at": 1794229288,
+  "ok": true,
+  "why": ""
+ },
+ "xhs_fresh": {
+  "alerted": false,
+  "at": 1795302773,
+  "fail_since": null,
+  "last_ok_at": 1795302773,
+  "ok": true,
+  "why": ""
+ }
+}
